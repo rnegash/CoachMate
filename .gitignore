@@ -2,3 +2,15 @@
 node_modules/
 .env
 .env.local
+
+# Next.js build output / generated types
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Vercel
+.vercel
+
+# Logs
+npm-debug.log*
