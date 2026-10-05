@@ -34,6 +34,12 @@ it does not change the architecture now.
 
 5 weeks, Sep 21 – Oct 26, 2026. See course Kursplan for weekly phase breakdown.
 
+Week 3–4 slice order and two-day block mapping live in
+`documentation/CoachMate_Implementation_Plan.md` — read that file at the
+start of a session to see which slice/day is current. This file does not
+duplicate that content; it only carries scope, data-flow, and compliance
+rules that apply regardless of which slice is active.
+
 ## Current Scope Boundaries
 
 ### Explicitly out of scope (for now)
