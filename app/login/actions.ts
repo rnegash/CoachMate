@@ -9,7 +9,7 @@ export async function login(_prev: string | null, formData: FormData) {
   if (!expected) return "APP_SHARED_PASSWORD is not configured.";
 
   if (formData.get("password") !== process.env.APP_SHARED_PASSWORD) {
-    return "Falsches Passwort.";
+    return "That password isn’t right.";
   }
 
   (await cookies()).set(ACCESS_COOKIE, expected, {

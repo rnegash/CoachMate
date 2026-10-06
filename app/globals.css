@@ -1,26 +1,87 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Sideline design system tokens — https://claude.ai/artifact/KiRrpPFaV6A3KcxsasfHzY
+   Light theme only (Sideline defines no dark theme). */
+@theme {
+  --color-surface: #f6f5f2;
+  --color-surface-raised: #ffffff;
+  --color-surface-sunken: #ecebe6;
+  --color-border: #d6d4cc;
+  --color-border-strong: #82807a;
+  --color-ink: #1c1e21;
+  --color-ink-muted: #565a60;
+  --color-accent: #1d4ed8;
+  --color-accent-hover: #1a41b0;
+  --color-accent-tint: #e4ebfb;
+  --color-on-accent: #ffffff;
+  --color-focus-ring: var(--color-accent);
+  --color-danger: #b3261e;
+  --color-status-available: #0b5c4d;
+  --color-status-available-tint: #dcf0ea;
+  --color-status-late: #7a5200;
+  --color-status-late-tint: #faedcc;
+  --color-status-injured: #a83200;
+  --color-status-injured-tint: #fbe6dc;
+  --color-status-absent: #454a50;
+  --color-status-absent-tint: #e4e3de;
+  --color-attend-absent: #a83200;
+  --color-attend-absent-tint: #fbe6dc;
+  --color-ai: #7a5a1e;
+  --color-ai-tint: #f1e9d6;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-sans: var(--font-public-sans), system-ui, sans-serif;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --text-display-xl: 48px;
+  --text-display-xl--line-height: 52px;
+  --text-display-xl--font-weight: 700;
+  --text-display-lg: 36px;
+  --text-display-lg--line-height: 40px;
+  --text-display-lg--font-weight: 700;
+  --text-heading: 26px;
+  --text-heading--line-height: 32px;
+  --text-heading--font-weight: 700;
+  --text-title: 18px;
+  --text-title--line-height: 24px;
+  --text-title--font-weight: 600;
+  --text-numeral: 28px;
+  --text-numeral--line-height: 32px;
+  --text-numeral--font-weight: 700;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 26px;
+  --text-body-lg--font-weight: 400;
+  --text-body: 16px;
+  --text-body--line-height: 24px;
+  --text-body--font-weight: 400;
+  --text-label: 14px;
+  --text-label--line-height: 20px;
+  --text-label--font-weight: 600;
+  --text-caption: 13px;
+  --text-caption--line-height: 18px;
+  --text-caption--font-weight: 400;
+
+  --spacing-space-1: 4px;
+  --spacing-space-2: 8px;
+  --spacing-space-3: 12px;
+  --spacing-space-4: 16px;
+  --spacing-space-6: 24px;
+  --spacing-space-8: 32px;
+  --spacing-control-sm: 44px;
+  --spacing-control-md: 48px;
+  --spacing-control-lg: 56px;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+
+  --shadow-raised: 0 1px 2px rgba(28, 30, 33, 0.12);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }

@@ -20,5 +20,5 @@ export const config = {
   // Everything except the login page itself and static assets.
   // Note: the Twilio webhook route will need an exemption here later —
   // it authenticates via Twilio signature verification instead.
-  matcher: ["/((?!login|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!login(?:/|$)|_next/static|_next/image|favicon.ico$).*)"],
 };
