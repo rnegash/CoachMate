@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, formatDateTime, formatSessionDate, weekLabel } from "@/lib/format";
+import { formatDate, formatDateTime, formatSessionDate, localIsoDate, weekLabel } from "@/lib/format";
 
 describe("formatDateTime", () => {
   it("shows the time in Berlin, not UTC", () => {
@@ -36,5 +36,12 @@ describe("weekLabel", () => {
   it("uses the Berlin date near midnight", () => {
     // Sunday 23:30 UTC is already Monday 01:30 in Berlin — the next week.
     expect(weekLabel(new Date("2026-10-11T23:30:00Z"))).toBe("Week of 12–18 Oct");
+  });
+});
+
+describe("localIsoDate", () => {
+  it("uses the Berlin date, not the UTC one", () => {
+    expect(localIsoDate(new Date("2026-10-06T21:59:00Z"))).toBe("2026-10-06");
+    expect(localIsoDate(new Date("2026-10-06T22:00:00Z"))).toBe("2026-10-07");
   });
 });

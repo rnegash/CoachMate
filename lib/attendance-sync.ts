@@ -3,6 +3,7 @@ import { goneSessionIds, staleMarksBySession } from "@/lib/attendance-diff";
 import {
   acceptAttendanceRows,
   ATTENDANCE_ID_HEADER,
+  ATTENDANCE_TAB,
   attendanceIdColumn,
   findSessionColumns,
   parseAttendanceRows,
@@ -10,17 +11,20 @@ import {
 import { readColumns, readHeaderRow, sheetsClient } from "@/lib/sheets";
 import { supabaseAdmin } from "@/lib/supabase";
 
-const ATTENDANCE_TAB = "Attendance";
-
 export type AttendanceSyncResult = {
   sessions: number;
   marks: number;
   skipped: string[];
 };
 
+export function attendanceSpreadsheetId(): string {
+  const id = process.env.GOOGLE_SHEETS_ATTENDANCE_SPREADSHEET_ID;
+  if (!id) throw new Error("Missing GOOGLE_SHEETS_ATTENDANCE_SPREADSHEET_ID");
+  return id;
+}
+
 async function readAttendanceSheet() {
-  const spreadsheetId = process.env.GOOGLE_SHEETS_ATTENDANCE_SPREADSHEET_ID;
-  if (!spreadsheetId) throw new Error("Missing GOOGLE_SHEETS_ATTENDANCE_SPREADSHEET_ID");
+  const spreadsheetId = attendanceSpreadsheetId();
   const api = sheetsClient();
 
   const header = await readHeaderRow(api, spreadsheetId, ATTENDANCE_TAB, "UNFORMATTED_VALUE");

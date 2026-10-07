@@ -68,17 +68,17 @@ rules that apply regardless of which slice is active.
 - Claude API — Goal Mentor + Assistant Coach integrations
 - Player check-ins via WhatsApp (`BotMatcher` / `BotDelivery` split — see
   dedicated section below)
-- "Add training session" flow — the Google Sheet is planned ahead with a
-  column per training session for the term. This flow does **not** create
-  new Sheet columns or standalone session data; it matches an app-side
-  session (regular or extra/ad hoc) to its corresponding already-existing
-  column in the synced Sheet, via date (+ optional label for extra
-  sessions, e.g. "Extra skills session"). If no matching column exists
-  yet for an extra session, the flow cannot proceed — the coach adds the
-  column in the Sheet first, outside the app. Attendance itself still
-  follows the existing sync model (Sheets → Supabase one-way pull;
-  app → Sheets write-back for marks) — this flow only resolves _which_
-  column a session's attendance marks should write to.
+- Training sessions come only from the Sheet — the Google Sheet is planned
+  ahead with a column per training session for the term, headed by its
+  date (+ optional label for extra sessions, e.g. "2026-10-07 Extra skills
+  session"). The app never creates Sheet columns, rows, or standalone
+  session data, and has no "add session" flow (removed: it read as
+  creating sessions). The Attendance tab lists the synced sessions as
+  Today / Upcoming / Past; for an extra session the coach adds its column
+  in the Sheet, then syncs. Attendance itself still follows the existing
+  sync model (Sheets → Supabase one-way pull; app → Sheets write-back for
+  marks, writing only changed cells, with the column and player row looked
+  up live at save time).
 - Single shared-password gate via middleware (one env var, no accounts/
   sessions) — distinct from the full auth system above, which stays out
   of scope. Needed because the app will run on a public Vercel URL and

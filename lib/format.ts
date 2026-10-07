@@ -20,9 +20,14 @@ export function formatDate(iso: string): string {
   }).format(new Date(iso));
 }
 
+// Today's date in the team's time zone, as "YYYY-MM-DD".
+export function localIsoDate(now: Date): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(now);
+}
+
 // "Week of 5–11 Oct" (Monday to Sunday, in the team's time zone)
 export function weekLabel(now: Date): string {
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE }).format(now);
+  const today = localIsoDate(now);
   const date = new Date(`${today}T00:00:00Z`);
   const monday = new Date(date);
   monday.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));

@@ -1,6 +1,7 @@
 import "server-only";
 import { compareMarksByDate, type AttendanceMark } from "@/lib/attendance-marks";
 import { supabaseAdmin } from "@/lib/supabase";
+import { countBySession, type SessionCounts } from "@/lib/take-attendance";
 
 type MarkRow = {
   player_id: string;
@@ -64,3 +65,59 @@ export async function getRecentAttendanceByPlayer(
   return byPlayer;
 }
 
+
+export type SessionSummary = {
+  id: string;
+  session_date: string;
+  label: string | null;
+  counts: SessionCounts;
+};
+
+/**
+ * The most recent sessions up to and including `today` ("YYYY-MM-DD") plus
+ * the next few planned ones, with mark counts. Order is up to the caller.
+ */
+export async function listSessions(today: string, pastLimit = 20, upcomingLimit = 5): Promise<SessionSummary[]> {
+  const db = supabaseAdmin();
+  const columns = "id, session_date, label";
+  const [past, upcoming] = await Promise.all([
+    db.from("attendance_sessions").select(columns).lte("session_date", today)
+      .order("session_date", { ascending: false }).limit(pastLimit),
+    db.from("attendance_sessions").select(columns).gt("session_date", today)
+      .order("session_date", { ascending: true }).limit(upcomingLimit),
+  ]);
+  if (past.error) throw new Error(past.error.message);
+  if (upcoming.error) throw new Error(upcoming.error.message);
+  const sessions = [...past.data, ...upcoming.data];
+  if (sessions.length === 0) return [];
+
+  // ~40 players x 25 sessions stays around PostgREST's 1000-row cap.
+  const { data: marks, error: marksError } = await db
+    .from("attendance_marks")
+    .select("session_id, present")
+    .in("session_id", sessions.map((s) => s.id));
+  if (marksError) throw new Error(marksError.message);
+
+  const counts = countBySession(marks);
+  return sessions.map((s) => ({ ...s, counts: counts.get(s.id) ?? { present: 0, absent: 0 } }));
+}
+
+export async function getSession(id: string) {
+  const { data, error } = await supabaseAdmin()
+    .from("attendance_sessions")
+    .select("id, session_date, label")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data as { id: string; session_date: string; label: string | null } | null;
+}
+
+/** player_id -> present/absent for one session; unmarked players are absent from the map. */
+export async function getSessionMarks(sessionId: string): Promise<Map<string, boolean>> {
+  const { data, error } = await supabaseAdmin()
+    .from("attendance_marks")
+    .select("player_id, present")
+    .eq("session_id", sessionId);
+  if (error) throw new Error(error.message);
+  return new Map(data.map((m) => [m.player_id as string, m.present as boolean]));
+}

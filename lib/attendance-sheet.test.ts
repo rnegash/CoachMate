@@ -3,10 +3,13 @@ import {
   acceptAttendanceRows,
   attendanceIdColumn,
   findSessionColumns,
+  normalizeLabel,
   parseAttendanceRows,
   parseMark,
   parseSessionHeader,
+  playerRows,
   serialToIsoDate,
+  sessionId,
   type AttendanceRow,
 } from "@/lib/attendance-sheet";
 import type { CellValue, Columns } from "@/lib/sheet-cells";
@@ -170,5 +173,35 @@ describe("acceptAttendanceRows", () => {
       "row 4 (player_id not in the roster)",
       "row 5 (duplicate player_id)",
     ]);
+  });
+});
+
+describe("normalizeLabel / sessionId", () => {
+  it("collapses whitespace and treats blank as no label", () => {
+    expect(normalizeLabel("  Extra   skills ")).toBe("Extra skills");
+    expect(normalizeLabel("   ")).toBeNull();
+    expect(normalizeLabel(null)).toBeNull();
+  });
+
+  it("builds the same id the sync stores", () => {
+    expect(sessionId("2026-10-07", null)).toBe("2026-10-07");
+    expect(sessionId("2026-10-07", "Extra skills session")).toBe("2026-10-07 Extra skills session");
+    const { sessions } = findSessionColumns(["player_id", "2026-10-07  Extra   skills session"], 0);
+    expect(sessions[0].id).toBe(sessionId("2026-10-07", normalizeLabel(" Extra skills  session")));
+  });
+});
+
+describe("playerRows", () => {
+  it("maps player_id to its Sheet row, skipping blanks", () => {
+    expect(playerRows(["P001", "", " P002 "])).toEqual(
+      new Map([
+        ["P001", 2],
+        ["P002", 4],
+      ]),
+    );
+  });
+
+  it("keeps the first row for a duplicate id, like the sync", () => {
+    expect(playerRows(["P001", "P001"]).get("P001")).toBe(2);
   });
 });

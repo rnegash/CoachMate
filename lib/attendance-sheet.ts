@@ -2,6 +2,7 @@
 import { PLAYER_ID_FORMAT } from "@/lib/roster-sheet";
 import { columnLetter, type CellValue, type Columns } from "@/lib/sheet-cells";
 
+export const ATTENDANCE_TAB = "Attendance";
 export const ATTENDANCE_ID_HEADER = "player_id";
 
 export type Session = { id: string; session_date: string; label: string | null; sheet_column: string };
@@ -16,6 +17,17 @@ export function serialToIsoDate(serial: number): string {
     .slice(0, 10);
 }
 
+/** Collapses whitespace in an extra-session label; blank means no label. */
+export function normalizeLabel(label: string | null | undefined): string | null {
+  const l = label?.trim().replace(/\s+/g, " ");
+  return l ? l : null;
+}
+
+/** Session id as stored: "2026-10-07" or "2026-10-07 Extra skills session". */
+export function sessionId(session_date: string, label: string | null): string {
+  return label ? `${session_date} ${label}` : session_date;
+}
+
 // A session column header is a date, optionally followed by a label:
 // "2026-10-07" (typed or as a date cell) or "2026-10-07 Extra skills session".
 // Anything else (player_id, name, notes…) is not a session column.
@@ -23,7 +35,7 @@ export function parseSessionHeader(value: CellValue) {
   if (typeof value === "number") return { session_date: serialToIsoDate(value), label: null };
   const m = String(value).trim().match(/^(\d{4}-\d{2}-\d{2})(?:\s+(.+))?$/);
   if (!m || Number.isNaN(Date.parse(m[1]))) return null;
-  return { session_date: m[1], label: m[2]?.replace(/\s+/g, " ") ?? null };
+  return { session_date: m[1], label: normalizeLabel(m[2]) };
 }
 
 // Read unformatted so checkboxes / TRUE / FALSE arrive as booleans,
@@ -52,7 +64,7 @@ export function findSessionColumns(header: CellValue[], idCol: number) {
     if (index === idCol) return;
     const parsed = parseSessionHeader(h);
     if (!parsed) return;
-    const id = parsed.label ? `${parsed.session_date} ${parsed.label}` : parsed.session_date;
+    const id = sessionId(parsed.session_date, parsed.label);
     const sheet_column = columnLetter(index);
     if (seen.has(id)) {
       skipped.push(`column ${sheet_column} (duplicate session "${id}")`);
@@ -62,6 +74,16 @@ export function findSessionColumns(header: CellValue[], idCol: number) {
     sessions.push({ id, ...parsed, sheet_column, index });
   });
   return { sessions, skipped };
+}
+
+/** player_id -> Sheet row number (first occurrence wins, like the sync). */
+export function playerRows(idCells: CellValue[]): Map<string, number> {
+  const rows = new Map<string, number>();
+  idCells.forEach((cell, r) => {
+    const id = String(cell ?? "").trim();
+    if (id && !rows.has(id)) rows.set(id, r + 2);
+  });
+  return rows;
 }
 
 /** One row per player_id with its counted marks; blank cells are not counted. */

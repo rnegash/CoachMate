@@ -1,8 +1,17 @@
 import "server-only";
 import { google } from "googleapis";
 import { columnLetter, type CellValue } from "@/lib/sheet-cells";
+import type { CellWrite } from "@/lib/take-attendance";
 
-export function sheetsClient() {
+const SCOPES = {
+  read: "https://www.googleapis.com/auth/spreadsheets.readonly",
+  // Only the attendance write-back asks for this. The Sheet itself must
+  // also be shared with the service account as Editor; keep the Roster
+  // Sheet shared as Viewer.
+  write: "https://www.googleapis.com/auth/spreadsheets",
+} as const;
+
+export function sheetsClient(access: keyof typeof SCOPES = "read") {
   const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
   const key = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
   if (!email || !key) {
@@ -13,7 +22,7 @@ export function sheetsClient() {
   const auth = new google.auth.JWT({
     email,
     key: key.replace(/\\n/g, "\n"),
-    scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+    scopes: [SCOPES[access]],
   });
   return google.sheets({ version: "v4", auth });
 }
@@ -59,4 +68,14 @@ export async function readColumns(
   );
   const rowCount = Math.max(0, ...[...columns.values()].map((c) => c.length));
   return { columns, rowCount };
+}
+
+// Writes single cells as raw values, so booleans land as TRUE/FALSE
+// (ticking checkbox cells) and "" clears a cell.
+export async function writeCells(api: SheetsApi, spreadsheetId: string, data: CellWrite[]) {
+  if (data.length === 0) return;
+  await api.spreadsheets.values.batchUpdate({
+    spreadsheetId,
+    requestBody: { valueInputOption: "RAW", data },
+  });
 }
