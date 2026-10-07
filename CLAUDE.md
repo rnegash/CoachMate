@@ -47,7 +47,9 @@ rules that apply regardless of which slice is active.
 - Full user authentication (signup, sessions, password reset, roles) —
   not needed for a single-tenant, single-coach app
 - Error handling beyond the basics needed for a working demo
-- Automated testing
+- Automated testing beyond unit tests — end-to-end, component-rendering,
+  and integration tests (against Supabase, Sheets, Claude API, Twilio)
+  stay out of scope
 - Formal deployment pipeline (CI/CD) — manual Vercel deploys are fine
 - Multi-tenancy / multi-team support — single coach, single team, by design
 - Gender as a stored/groupable player field — dropped from scope
@@ -81,6 +83,16 @@ rules that apply regardless of which slice is active.
   sessions) — distinct from the full auth system above, which stays out
   of scope. Needed because the app will run on a public Vercel URL and
   shows real player names/data.
+
+### Unit tests (in scope)
+
+- Vitest, `npm test`. Tests live next to their module as `lib/**/*.test.ts`
+  and run in plain Node — no rendering, no network, no DB.
+- Filtering, sorting, formatting, parsing and diff logic goes in a pure
+  `lib/` module (no `server-only`, no Supabase/Sheets client at import), not
+  inline in pages/components or sync files, so it can be tested in
+  isolation. Pages, components, server actions and `*-sync.ts` files only
+  wire I/O to those helpers.
 
 ### Not yet decided
 
@@ -280,6 +292,12 @@ these rules inline, to avoid drift between copies.
   because the static caption is lower-effort and was what the hi-fi
   prototype actually showed; revisit if the static caption proves
   insufficient in practice (e.g. during pilot test #1).
+- Copyable Google Sheet templates: ready-made Roster and Attendance Sheets
+  with the headers the sync expects (`player_id`, `name`, optional `jersey`
+  on Roster; `player_id` plus one date column per session, optionally
+  "YYYY-MM-DD Label" for extra sessions, on Attendance), so a coach copies
+  them instead of building the layout by hand. Most useful if the code is
+  open-sourced; would not change the sync's read-only access to Sheets.
 
 ## Known Open Questions (carried forward, do not assume resolved)
 
