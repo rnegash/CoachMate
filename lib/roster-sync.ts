@@ -1,38 +1,25 @@
 import "server-only";
+import { parseRosterRows, ROSTER_HEADERS, rosterColumnIndex, type RosterSkip } from "@/lib/roster-sheet";
 import { readColumns, readHeaderRow, sheetsClient } from "@/lib/sheets";
 import { supabaseAdmin } from "@/lib/supabase";
 
 const ROSTER_TAB = "Roster";
-const HEADERS = { id: "player_id", name: "name", jersey: "jersey" } as const;
-// player_id reaches the Claude API later, so it must be opaque: "P" + digits
-// (e.g. P001). Anything else (initials, names, jersey-based keys) is rejected.
-// Mirrored by the players_id_format check in the migration.
-export const PLAYER_ID_FORMAT = /^P\d{1,6}$/;
 
 export type RosterSyncResult = {
   synced: number;
   removed: number;
-  skipped: { row: number; reason: string }[];
+  skipped: RosterSkip[];
 };
-
-type RosterRow = { id: string; name: string; jersey_number: string | null };
 
 async function readRosterSheet() {
   const spreadsheetId = process.env.GOOGLE_SHEETS_ROSTER_SPREADSHEET_ID;
   if (!spreadsheetId) throw new Error("Missing GOOGLE_SHEETS_ROSTER_SPREADSHEET_ID");
   const api = sheetsClient();
 
-  const header = (await readHeaderRow(api, spreadsheetId, ROSTER_TAB)).map((h) =>
-    String(h).trim().toLowerCase(),
-  );
-  const idx = {
-    id: header.indexOf(HEADERS.id),
-    name: header.indexOf(HEADERS.name),
-    jersey: header.indexOf(HEADERS.jersey),
-  };
+  const idx = rosterColumnIndex(await readHeaderRow(api, spreadsheetId, ROSTER_TAB));
   if (idx.id < 0 || idx.name < 0) {
     throw new Error(
-      `The "${ROSTER_TAB}" tab needs "${HEADERS.id}" and "${HEADERS.name}" header columns in row 1.`,
+      `The "${ROSTER_TAB}" tab needs "${ROSTER_HEADERS.id}" and "${ROSTER_HEADERS.name}" header columns in row 1.`,
     );
   }
 
@@ -42,32 +29,7 @@ async function readRosterSheet() {
     ROSTER_TAB,
     [idx.id, idx.name, idx.jersey].filter((i) => i >= 0),
   );
-  const cell = (col: number, row: number) =>
-    col < 0 ? "" : String(columns.get(col)?.[row] ?? "").trim();
-
-  const rows: RosterRow[] = [];
-  const skipped: RosterSyncResult["skipped"] = [];
-  const seen = new Set<string>();
-  // Every player_id present in the Sheet, including rows skipped for a
-  // missing name: a data-entry slip must not mark a player as removed.
-  const presentIds = new Set<string>();
-  for (let r = 0; r < rowCount; r++) {
-    const sheetRow = r + 2;
-    const id = cell(idx.id, r);
-    const name = cell(idx.name, r);
-    const jersey = cell(idx.jersey, r);
-    if (!id && !name && !jersey) continue;
-    if (id) presentIds.add(id);
-    if (!id) skipped.push({ row: sheetRow, reason: `missing ${HEADERS.id}` });
-    else if (!PLAYER_ID_FORMAT.test(id)) skipped.push({ row: sheetRow, reason: `${HEADERS.id} must look like P001` });
-    else if (!name) skipped.push({ row: sheetRow, reason: `missing ${HEADERS.name}` });
-    else if (seen.has(id)) skipped.push({ row: sheetRow, reason: `duplicate ${HEADERS.id}` });
-    else {
-      seen.add(id);
-      rows.push({ id, name, jersey_number: jersey || null });
-    }
-  }
-  return { rows, skipped, presentIds };
+  return parseRosterRows(columns, rowCount, idx);
 }
 
 export async function syncRoster(): Promise<RosterSyncResult> {

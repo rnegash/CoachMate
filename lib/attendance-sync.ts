@@ -1,10 +1,16 @@
 import "server-only";
-import { PLAYER_ID_FORMAT } from "@/lib/roster-sync";
-import { columnLetter, readColumns, readHeaderRow, sheetsClient } from "@/lib/sheets";
+import { goneSessionIds, staleMarksBySession } from "@/lib/attendance-diff";
+import {
+  acceptAttendanceRows,
+  ATTENDANCE_ID_HEADER,
+  attendanceIdColumn,
+  findSessionColumns,
+  parseAttendanceRows,
+} from "@/lib/attendance-sheet";
+import { readColumns, readHeaderRow, sheetsClient } from "@/lib/sheets";
 import { supabaseAdmin } from "@/lib/supabase";
 
 const ATTENDANCE_TAB = "Attendance";
-const ID_HEADER = "player_id";
 
 export type AttendanceSyncResult = {
   sessions: number;
@@ -12,65 +18,18 @@ export type AttendanceSyncResult = {
   skipped: string[];
 };
 
-type Session = { id: string; session_date: string; label: string | null; sheet_column: string };
-type Mark = { player_id: string; session_id: string; present: boolean };
-
-// Google Sheets date serial number -> "YYYY-MM-DD" (day 0 = 1899-12-30).
-function serialToIsoDate(serial: number): string {
-  return new Date(Date.UTC(1899, 11, 30) + Math.floor(serial) * 86_400_000)
-    .toISOString()
-    .slice(0, 10);
-}
-
-// A session column header is a date, optionally followed by a label:
-// "2026-10-07" (typed or as a date cell) or "2026-10-07 Extra skills session".
-// Anything else (player_id, name, notes…) is not a session column.
-function parseSessionHeader(value: string | number | boolean) {
-  if (typeof value === "number") return { session_date: serialToIsoDate(value), label: null };
-  const m = String(value).trim().match(/^(\d{4}-\d{2}-\d{2})(?:\s+(.+))?$/);
-  if (!m || Number.isNaN(Date.parse(m[1]))) return null;
-  return { session_date: m[1], label: m[2]?.replace(/\s+/g, " ") ?? null };
-}
-
-// Read unformatted so checkboxes / TRUE / FALSE arrive as booleans,
-// regardless of the Sheet's locale (a Swedish Sheet displays SANT/FALSKT).
-function parseMark(value: string | number | boolean | undefined): boolean | null | "invalid" {
-  if (value === undefined || value === "") return null;
-  if (typeof value === "boolean") return value;
-  const s = String(value).trim().toUpperCase();
-  if (s === "") return null;
-  if (s === "TRUE") return true;
-  if (s === "FALSE") return false;
-  return "invalid";
-}
-
 async function readAttendanceSheet() {
   const spreadsheetId = process.env.GOOGLE_SHEETS_ATTENDANCE_SPREADSHEET_ID;
   if (!spreadsheetId) throw new Error("Missing GOOGLE_SHEETS_ATTENDANCE_SPREADSHEET_ID");
   const api = sheetsClient();
 
   const header = await readHeaderRow(api, spreadsheetId, ATTENDANCE_TAB, "UNFORMATTED_VALUE");
-  const idCol = header.findIndex((h) => String(h).trim().toLowerCase() === ID_HEADER);
+  const idCol = attendanceIdColumn(header);
   if (idCol < 0) {
-    throw new Error(`The "${ATTENDANCE_TAB}" tab needs a "${ID_HEADER}" header column in row 1.`);
+    throw new Error(`The "${ATTENDANCE_TAB}" tab needs a "${ATTENDANCE_ID_HEADER}" header column in row 1.`);
   }
 
-  const skipped: string[] = [];
-  const sessions: (Session & { index: number })[] = [];
-  const seenSessions = new Set<string>();
-  header.forEach((h, index) => {
-    if (index === idCol) return;
-    const parsed = parseSessionHeader(h);
-    if (!parsed) return;
-    const id = parsed.label ? `${parsed.session_date} ${parsed.label}` : parsed.session_date;
-    const sheet_column = columnLetter(index);
-    if (seenSessions.has(id)) {
-      skipped.push(`column ${sheet_column} (duplicate session "${id}")`);
-      return;
-    }
-    seenSessions.add(id);
-    sessions.push({ id, ...parsed, sheet_column, index });
-  });
+  const { sessions, skipped: headerSkipped } = findSessionColumns(header, idCol);
 
   // Only the player_id column and session columns are fetched.
   const { columns, rowCount } = await readColumns(
@@ -81,25 +40,7 @@ async function readAttendanceSheet() {
     "UNFORMATTED_VALUE",
   );
 
-  const rows: { sheetRow: number; playerId: string; marks: Mark[] }[] = [];
-  for (let r = 0; r < rowCount; r++) {
-    const sheetRow = r + 2;
-    const playerId = String(columns.get(idCol)?.[r] ?? "").trim();
-    const marks: Mark[] = [];
-    for (const s of sessions) {
-      const mark = parseMark(columns.get(s.index)?.[r]);
-      if (mark === "invalid") {
-        skipped.push(`cell ${s.sheet_column}${sheetRow} (not TRUE/FALSE, treated as not counted)`);
-      } else if (mark !== null) {
-        marks.push({ player_id: playerId, session_id: s.id, present: mark });
-      }
-    }
-    if (!playerId) {
-      if (marks.length > 0) skipped.push(`row ${sheetRow} (missing ${ID_HEADER})`);
-      continue;
-    }
-    rows.push({ sheetRow, playerId, marks });
-  }
+  const { rows, skipped: rowSkipped } = parseAttendanceRows(columns, rowCount, idCol, sessions);
 
   return {
     sessions: sessions.map(({ id, session_date, label, sheet_column }) => ({
@@ -109,7 +50,7 @@ async function readAttendanceSheet() {
       sheet_column,
     })),
     rows,
-    skipped,
+    skipped: [...headerSkipped, ...rowSkipped],
   };
 }
 
@@ -148,20 +89,9 @@ export async function syncAttendance(): Promise<AttendanceSyncResult> {
   if (playersError) throw new Error(playersError.message);
   const known = new Set((players ?? []).map((p) => p.id as string));
 
-  const marks: Mark[] = [];
-  const seenPlayers = new Set<string>();
-  for (const row of rows) {
-    if (!PLAYER_ID_FORMAT.test(row.playerId)) {
-      skipped.push(`row ${row.sheetRow} (${ID_HEADER} must look like P001)`);
-    } else if (!known.has(row.playerId)) {
-      skipped.push(`row ${row.sheetRow} (${ID_HEADER} not in the roster)`);
-    } else if (seenPlayers.has(row.playerId)) {
-      skipped.push(`row ${row.sheetRow} (duplicate ${ID_HEADER})`);
-    } else {
-      seenPlayers.add(row.playerId);
-      marks.push(...row.marks);
-    }
-  }
+  const accepted = acceptAttendanceRows(rows, known);
+  const { marks, players: seenPlayers } = accepted;
+  skipped.push(...accepted.skipped);
 
   // Sessions: upsert what's in the Sheet, drop columns that no longer exist
   // (their marks cascade).
@@ -169,10 +99,10 @@ export async function syncAttendance(): Promise<AttendanceSyncResult> {
     const { error } = await db.from("attendance_sessions").upsert(sessions);
     if (error) throw new Error(error.message);
   }
-  const inSheet = new Set(sessions.map((s) => s.id));
-  const goneSessions = (existingSessions ?? [])
-    .map((s) => s.id as string)
-    .filter((id) => !inSheet.has(id));
+  const goneSessions = goneSessionIds(
+    (existingSessions ?? []).map((s) => s.id as string),
+    sessions,
+  );
   if (goneSessions.length > 0) {
     const { error } = await db.from("attendance_sessions").delete().in("id", goneSessions);
     if (error) throw new Error(error.message);
@@ -183,15 +113,7 @@ export async function syncAttendance(): Promise<AttendanceSyncResult> {
     const { error } = await db.from("attendance_marks").upsert(marks);
     if (error) throw new Error(error.message);
   }
-  const existingMarks = await selectAllMarkKeys();
-  const current = new Set(marks.map((m) => `${m.player_id}|${m.session_id}`));
-  const staleBySession = new Map<string, string[]>();
-  for (const m of existingMarks) {
-    if (current.has(`${m.player_id}|${m.session_id}`)) continue;
-    const list = staleBySession.get(m.session_id) ?? [];
-    list.push(m.player_id);
-    staleBySession.set(m.session_id, list);
-  }
+  const staleBySession = staleMarksBySession(await selectAllMarkKeys(), marks);
   for (const [sessionId, playerIds] of staleBySession) {
     const { error } = await db
       .from("attendance_marks")

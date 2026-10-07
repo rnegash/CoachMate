@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ACCESS_COOKIE, accessToken } from "@/lib/access-gate";
+import { safeRedirectPath } from "@/lib/navigation";
 
 export async function login(_prev: string | null, formData: FormData) {
   const expected = await accessToken();
@@ -20,7 +21,5 @@ export async function login(_prev: string | null, formData: FormData) {
     maxAge: 60 * 60 * 24 * 30,
   });
 
-  // Only allow same-site relative redirects.
-  const from = String(formData.get("from") ?? "");
-  redirect(from.startsWith("/") && !from.startsWith("//") ? from : "/");
+  redirect(safeRedirectPath(String(formData.get("from") ?? "")));
 }

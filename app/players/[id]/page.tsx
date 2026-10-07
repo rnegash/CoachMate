@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { AttendanceStrip } from "@/components/AttendanceStrip";
-import { attendanceSummary, getPlayerAttendance } from "@/lib/attendance";
-import { formatDate, formatSessionDate } from "@/lib/format";
+import { getPlayerAttendance } from "@/lib/attendance";
+import { attendanceSummary, sessionLabel } from "@/lib/attendance-marks";
+import { formatDate } from "@/lib/format";
 import { getPlayer } from "@/lib/players";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -43,7 +44,7 @@ export default async function PlayerDetailPage({ params }: PageProps<"/players/[
             marks={recent.map((m) => ({
               key: m.session_id,
               present: m.present,
-              label: [formatSessionDate(m.session_date), m.label].filter(Boolean).join(" · "),
+              label: sessionLabel(m),
             }))}
           />
         ) : (

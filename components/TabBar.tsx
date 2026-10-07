@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Chat, CheckSquare, ListIcon } from "@/components/icons";
+import { isTabActive } from "@/lib/navigation";
 
 const TABS = [
   { href: "/", label: "Briefing", Icon: ListIcon },
@@ -19,7 +20,7 @@ export function TabBar() {
     >
       <ul className="mx-auto flex max-w-xl">
         {TABS.map(({ href, label, Icon }) => {
-          const current = href === "/" ? pathname === "/" : pathname.startsWith(href);
+          const current = isTabActive(href, pathname);
           return (
             <li key={href} className="flex-1">
               <Link

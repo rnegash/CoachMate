@@ -1,12 +1,6 @@
 import "server-only";
+import { compareMarksByDate, type AttendanceMark } from "@/lib/attendance-marks";
 import { supabaseAdmin } from "@/lib/supabase";
-
-export type AttendanceMark = {
-  session_id: string;
-  session_date: string;
-  label: string | null;
-  present: boolean;
-};
 
 type MarkRow = {
   player_id: string;
@@ -23,11 +17,6 @@ function toMark(row: MarkRow): AttendanceMark {
   };
 }
 
-// Oldest first; sessions on the same date keep a stable order by id.
-function byDate(a: AttendanceMark, b: AttendanceMark) {
-  return a.session_date.localeCompare(b.session_date) || a.session_id.localeCompare(b.session_id);
-}
-
 const MARK_SELECT = "player_id, present, attendance_sessions!inner(id, session_date, label)";
 
 /** Every counted session (present/absent) for one player, oldest first. */
@@ -38,7 +27,7 @@ export async function getPlayerAttendance(playerId: string): Promise<AttendanceM
     .eq("player_id", playerId)
     .returns<MarkRow[]>();
   if (error) throw new Error(error.message);
-  return data.map(toMark).sort(byDate);
+  return data.map(toMark).sort(compareMarksByDate);
 }
 
 /**
@@ -71,27 +60,7 @@ export async function getRecentAttendanceByPlayer(
     list.push(toMark(row));
     byPlayer.set(row.player_id, list);
   }
-  for (const list of byPlayer.values()) list.sort(byDate);
+  for (const list of byPlayer.values()) list.sort(compareMarksByDate);
   return byPlayer;
 }
 
-/**
- * Neutral, factual count over the last `window` counted sessions, e.g.
- * "Absent 2 of last 6 counted sessions" or, with `count: "present"`,
- * "Present at 4 of last 6 counted sessions". Not-counted sessions are
- * skipped, not treated as absences. Returns null when nothing is counted yet.
- */
-export function attendanceSummary(
-  marks: AttendanceMark[],
-  window: number,
-  count: "absent" | "present" = "absent",
-): string | null {
-  const recent = marks.slice(-window);
-  const n = recent.length;
-  if (n === 0) return null;
-  const present = recent.filter((m) => m.present).length;
-  if (n === 1) return present ? "Present at the last counted session" : "Absent at the last counted session";
-  if (present === n) return `Present at all of the last ${n} counted sessions`;
-  if (count === "present") return `Present at ${present} of last ${n} counted sessions`;
-  return `Absent ${n - present} of last ${n} counted sessions`;
-}

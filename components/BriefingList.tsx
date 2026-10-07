@@ -3,16 +3,13 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
 import { EmptyState } from "@/components/EmptyState";
-import { PlayerBriefingRow, type Signal } from "@/components/PlayerBriefingRow";
+import { PlayerBriefingRow } from "@/components/PlayerBriefingRow";
 import { SearchField } from "@/components/SearchField";
-import type { PlayerSummary } from "@/lib/players";
-
-export type BriefingPlayer = PlayerSummary & { signals: Signal[] };
+import { filterByName, type BriefingPlayer } from "@/lib/briefing";
 
 export function BriefingList({ players }: { players: BriefingPlayer[] }) {
   const [query, setQuery] = useState("");
-  const q = query.trim().toLocaleLowerCase();
-  const visible = q ? players.filter((p) => p.name.toLocaleLowerCase().includes(q)) : players;
+  const visible = filterByName(players, query);
 
   if (players.length === 0) {
     return (
