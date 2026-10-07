@@ -15,14 +15,14 @@ override anything that conflicts with this prompt.
 
 ## Goal Mentor
 
-- Request payload must contain only: player ID + behavioral signals
-  (attendance, check-in history, goal text) needed for a SMART-goal
-  suggestion. Never include real name, phone number, or any other direct
-  identifier — check this explicitly before adding or changing a field
+- Request payload must contain only what CLAUDE.md's Goal Mentor section
+  lists (currently: goal draft text + the player's other active goal
+  texts; no attendance, no player ID). Never include real name, phone
+  number, or any other direct identifier — check this explicitly before adding or changing a field
   in the request shape, not just at the UI layer.
 - The free-text goal note field must show the static instructional
-  caption (only an anonymous player ID + the text reach the AI; no
-  names/contact details). This is a static, always-visible caption, not
+  caption (only the text itself reaches the AI; no names/contact
+  details). This is a static, always-visible caption, not
   active detection of what was typed — don't add scanning/blocking logic
   for this (see CLAUDE.md Future Ideas; that's deferred, not this
   agent's job to build unprompted).

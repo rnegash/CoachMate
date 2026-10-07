@@ -109,14 +109,19 @@ real name to the Claude API.
 
 ### Goal Mentor
 
-- Sees: player ID + behavioral signals (attendance, check-in history,
-  goal text) relevant to generating a SMART-goal suggestion
+- Sees: the coach's goal draft text and the player's other active goal
+  texts. Check-in signals may be added later (separate decision). The
+  pseudonymous player ID is allowed but not needed, and is not sent.
+- Does not see attendance (decided 2026-10-07): it says nothing about
+  why sessions were missed, the player is usually present while the goal
+  is drafted, and a count read out in front of them can feel like
+  judgement. Prompt and spec: `documentation/AI goal mentor/`
 - Does not see: real name, phone number, or any other direct identifier
 - A static instructional caption is shown wherever free text (goal notes,
-  Assistant Coach messages) is entered, stating that only an anonymous
-  player ID and the text itself reach the AI — no names or contact
-  details should be included. This is always-visible text, not active
-  detection of what the coach actually typed (see Future Ideas).
+  Assistant Coach messages) is entered, stating that only the text itself
+  reaches the AI — no names or contact details should be included. This
+  is always-visible text, not active detection of what the coach actually
+  typed (see Future Ideas).
 
 ### Assistant Coach
 
@@ -298,6 +303,10 @@ these rules inline, to avoid drift between copies.
   "YYYY-MM-DD Label" for extra sessions, on Attendance), so a coach copies
   them instead of building the layout by hand. Most useful if the code is
   open-sourced; would not change the sync's read-only access to Sheets.
+- Team-specific AI reference: a second document next to the generic sport
+  reference (`documentation/AI sport knowledge/`) for one team's own
+  terms, structures and drills, loaded into the Assistant Coach and Goal
+  Mentor prompts. The sport reference itself stays team-neutral.
 
 ## Known Open Questions (carried forward, do not assume resolved)
 

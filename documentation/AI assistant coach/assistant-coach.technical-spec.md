@@ -8,7 +8,7 @@ Send the full contents of `assistant-coach.prompt.md` as one string in the top-l
 
 ## 2. Assembly
 
-- The prompt file contains six sections, each starting with an uppercase heading (ROLE AND CONTEXT, SOURCES AND EVIDENCE, COACHING THE COACH, TOPIC HANDLING, TONE AND RESPONSE STYLE, BOUNDARIES AND DATA RULES), separated by a blank line.
+- The prompt file contains six sections, each starting with an uppercase heading (ROLE AND CONTEXT, SOURCES AND EVIDENCE, COACHING THE COACH, TOPIC HANDLING, TONE AND RESPONSE STYLE, BOUNDARIES AND DATA RULES), separated by a blank line, followed by the `{{SPORT_REFERENCE}}` placeholder (section 3a).
 - Keep the prompt in its own file so other teams can edit it without touching code.
 
 ## 3. Placeholder
@@ -16,6 +16,13 @@ Send the full contents of `assistant-coach.prompt.md` as one string in the top-l
 - Replace `{{SPORT}}` before sending, using the app's sport setting.
 - If no sport is set, replace the whole phrase `adult recreational {{SPORT}} teams` with `adult recreational sports teams`.
 - Reject or escape values that contain line breaks or instructions, since the setting becomes part of the prompt.
+
+## 3a. Sport reference
+
+- The last line of the prompt is `{{SPORT_REFERENCE}}`. Replace it with the contents of the sport's reference file, from the line `SPORT REFERENCE: …` to the end (drop the HTML comment at the top).
+- Reference files live in `documentation/AI sport knowledge/`, one per sport (`ultimate.md`). The same file is used by the Assistant Coach and the Goal Mentor.
+- If no file exists for the sport setting, replace the placeholder with: `SPORT REFERENCE: none available. Use general knowledge of the sport and say when a sport-specific point is uncertain.`
+- The reference is fixed text, so place it in the system prompt and let prompt caching cover it (the system prompt is the same on every request).
 
 ## 4. Model
 
