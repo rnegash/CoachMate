@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { AttendanceStrip } from "@/components/AttendanceStrip";
+import { GoalList } from "@/components/GoalList";
 import { getPlayerAttendance } from "@/lib/attendance";
 import { attendanceSummary, sessionLabel } from "@/lib/attendance-marks";
 import { formatDate } from "@/lib/format";
+import { listPlayerGoals } from "@/lib/goals";
 import { getPlayer } from "@/lib/players";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -19,7 +21,11 @@ const STRIP_WINDOW = 8;
 
 export default async function PlayerDetailPage({ params }: PageProps<"/players/[id]">) {
   const { id } = await params;
-  const [player, attendance] = await Promise.all([getPlayer(id), getPlayerAttendance(id)]);
+  const [player, attendance, goals] = await Promise.all([
+    getPlayer(id),
+    getPlayerAttendance(id),
+    listPlayerGoals(id),
+  ]);
   if (!player) notFound();
 
   const recent = attendance.slice(-STRIP_WINDOW);
@@ -52,7 +58,7 @@ export default async function PlayerDetailPage({ params }: PageProps<"/players/[
         )}
       </Section>
       <Section title="Goals">
-        <p className="text-body text-ink-muted">No goals yet.</p>
+        <GoalList playerId={player.id} active={goals.active} completed={goals.completed} />
       </Section>
     </main>
   );

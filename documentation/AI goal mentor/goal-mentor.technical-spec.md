@@ -40,16 +40,20 @@ other_active_goals:
 
 ## 4. Model
 
-- Model: Claude Haiku 4.5, pinned snapshot `claude-haiku-4-5-20251001`, same as the Assistant Coach.
-- Do not enable extended thinking (omit `thinking`). The task is short and latency matters: the coach usually asks for feedback in the middle of a conversation with the player and waits for the result on the Add Goal screen.
+- Model: Claude Sonnet 5.5 (`claude-sonnet-5-5`), $2 / $10 per million input / output tokens.
+- Why not Haiku 4.5 (decided 2026-10-07, after running the same 7 drafts on both): Haiku gave sensible feedback but ignored the output rules. It offered no suggested goal in 7 of 7 runs and repeated a name from the draft in 2 of 3 runs. Sonnet 5.5 suggested a goal in 6 of 7 (none only for the out-of-scope weight goal), repeated no names, and stated its assumptions, at the same speed (3-6 s).
+- Thinking off: `thinking: { type: "between_tools" }` (the lowest setting on this model; `disabled` returns a 400). In testing, thinking on gave no better results. Effort `low` (`output_config.effort`). Latency matters: the coach usually asks for feedback in the middle of a conversation with the player.
+- `between_tools` is accepted only by Sonnet 5.5. If the model changes, remove it.
+- Prompt caching: the system prompt (prompt + sport reference, about 5.5k tokens) is identical on every request, so it is sent as one text block with `cache_control: { type: "ephemeral" }`. That brings a request from about 1.4 to about 0.5 cents.
+- Refusal fallback: `fallbacks: "default"` with beta `server-side-fallback-2026-07-01` (Claude API only). A refusal is unlikely for coaching goals; the fallback is cheap insurance. A request that still ends in `refusal` shows the "no feedback" message (section 7).
 - Re-check model availability and pricing before release.
 
 ## 5. Output format (structured outputs)
 
 Use structured outputs so the response is always valid JSON in the shape the UI expects. Haiku 4.5 supports this.
 
-- Parameter: `output_config: { format: { type: "json_schema", schema } }`. In TypeScript, prefer `client.messages.parse()` with `zodOutputFormat(...)` from `@anthropic-ai/sdk/helpers/zod`, which also validates the result.
-- The API does not enforce array lengths or string lengths. The TypeScript SDK strips those constraints from the schema it sends and checks them on the response; keep the limits in the Zod schema anyway (at most 3 feedback points, at most 2 questions).
+- Parameter: `output_config: { format: { type: "json_schema", schema } }`. In TypeScript: `client.beta.messages.parse()` (beta, because of the fallback) with `betaZodOutputFormat(...)` from `@anthropic-ai/sdk/helpers/beta/zod`, which also validates the result.
+- The API does not enforce array lengths. Don't put the limits in the schema either: a third item would then fail the whole response. Trim on the server instead (at most 2 feedback points, at most 2 questions; `limitResult` in `lib/goal-mentor-input.ts`).
 - Every object needs `additionalProperties: false`.
 
 Schema:
@@ -82,8 +86,14 @@ There is deliberately no score, rating or "quality" field, and none should be ad
 
 ## 6. Request parameters
 
-- `max_tokens`: 1024. A safety limit, not a target.
-- Do not set sampling parameters until the current API reference for Haiku 4.5 has been checked.
+- `max_tokens`: 2048. A safety limit, not a target; responses were about 150-320 tokens in testing.
+- No sampling parameters: Sonnet 5.5 rejects non-default values.
+
+## 6a. Name removal (safety net)
+
+- The prompt tells the model never to repeat a name from the draft. As a second line of defence, the server replaces the selected player's name in every field of the response with "the player" (`removeName` in `lib/goal-mentor-input.ts`): the full name and each part of it, case-insensitive, whole words only, keeping possessives ("the player's").
+- The name is read from the database on the server and never sent to the API.
+- This catches only the selected player's own name, not teammates or other people named in the draft. Detecting any name in the coach's input stays deferred (`CLAUDE.md`, Future Ideas).
 
 ## 7. Errors and stop reasons
 
@@ -114,22 +124,25 @@ Check `stop_reason` before using the result:
 ## 11. Persistence
 
 - Only the final goal text the coach saves is stored, as for a goal saved without feedback.
-- Open decision, not covered by `CLAUDE.md` yet: whether to store that a saved goal came from an accepted AI suggestion (for example a boolean on the goal). Decide before building it; per `CLAUDE.md` a new field is flagged first, not assumed.
+- Decided 2026-10-07: nothing records whether a goal came from an AI suggestion (no flag on the goal). Instead, the Goals section on Player Detail carries a static footnote: "Goals may have been written with the help of AI." It is always shown, whether or not a particular goal was AI-assisted.
+- Known trade-off: if a later compliance review requires a label on each AI-derived goal, past goals can't be identified. Revisit this decision before adding any per-goal label.
 
 ## 12. Request shape (example)
 
 ```json
 {
-  "model": "claude-haiku-4-5-20251001",
-  "max_tokens": 1024,
-  "system": "<assembled prompt>",
+  "model": "claude-sonnet-5-5",
+  "max_tokens": 2048,
+  "system": [{ "type": "text", "text": "<assembled prompt>", "cache_control": { "type": "ephemeral" } }],
+  "thinking": { "type": "between_tools" },
+  "fallbacks": "default",
   "messages": [
     {
       "role": "user",
       "content": "<today>2026-10-07</today>\n<goal_draft>better forehands</goal_draft>"
     }
   ],
-  "output_config": { "format": { "type": "json_schema", "schema": { "…": "see section 5" } } }
+  "output_config": { "effort": "low", "format": { "type": "json_schema", "schema": { "…": "see section 5" } } }
 }
 ```
 
@@ -141,7 +154,7 @@ Possible response:
     { "aspect": "clear_and_checkable", "text": "\"Better\" leaves open what should change and how anyone would notice. Naming one situation, such as forehands past a mark, and a simple count makes it checkable." },
     { "aspect": "realistic", "text": "Break throws need a partner to mark. Adding practice between sessions keeps the goal moving on weeks without training." }
   ],
-  "suggested_goal": "By 4 November, complete 7 of 10 forehand break throws past a static mark at 10 metres, practising with a partner twice a week for 10 minutes.",
+  "suggested_goal": "By 4 November, I complete 7 of 10 forehand break throws past a static mark at 10 metres, practising with a partner twice a week for 10 minutes.",
   "questions_for_player": [
     "Which throw would make the biggest difference for you in games right now?",
     "How much time do you realistically have to practise between sessions?"

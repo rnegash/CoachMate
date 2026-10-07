@@ -22,8 +22,9 @@ it does not change the architecture now.
 - Database: Supabase (roster/attendance copies, Goals, Bot Settings/overrides)
 - External data source: Google Sheets (Roster, Attendance) — one-way
   periodic pull into Supabase; attendance writes go back to Sheets directly
-- AI: Claude API — two separate integrations, "Goal Mentor" (player ID +
-  behavioral signals) and "Assistant Coach" (stateless, no player context)
+- AI: Claude API — two separate integrations, "Goal Mentor" (goal text
+  only, see Data-Flow section) and "Assistant Coach" (stateless, no player
+  context)
 - Hosting: Vercel (free tier)
 - Player checkins via messages: Twilio Sandbox, WhatsApp
 - Design system: "Sideline" (tokens + component specs at
@@ -231,6 +232,10 @@ flowchart (MUSS-Kriterium) is tracked as a parallel deliverable.
   "AI-generated" — not implied by placement or icon alone, an explicit
   label.
 - Every Assistant Coach response must carry the same label.
+- Saved goals are not labeled individually and no AI flag is stored
+  (decided 2026-10-07). The Goals section on Player Detail always shows
+  a static footnote: "Goals may have been written with the help of AI."
+  Do not remove it or hide it behind a setting.
 - Goal Mentor suggestions require one-click Accept / Edit / Dismiss —
   never auto-applied to a player's record.
 - Assistant Coach chat has no Accept/Edit/Dismiss and writes nothing to

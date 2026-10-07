@@ -47,3 +47,9 @@ export const Check = (p: IconProps) => (
 export const Cross = (p: IconProps) => (
   <Icon {...p}><path d="M6 6l12 12M18 6 6 18" /></Icon>
 );
+// Filled, unlike the line icons: the Sideline AI mark.
+export const Sparkle = ({ size = 12, className }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+    <path d="M12 2l1.6 5.4L19 9l-5.4 1.6L12 16l-1.6-5.4L5 9l5.4-1.6z" />
+  </svg>
+);
