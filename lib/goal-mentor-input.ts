@@ -75,17 +75,22 @@ export function limitResult(r: MentorResult): MentorResult {
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
- * Safety net for the prompt's "never repeat a name" rule: replaces the
- * selected player's full name and each part of it (first name, surname) in
- * every field. Only this player's own name is known to the server.
+ * Returns a function that replaces the selected player's full name and each
+ * part of it (first name, surname) with "the player". Only this player's
+ * own name is known to the server.
  */
-export function removeName(r: MentorResult, playerName: string): MentorResult {
+export function nameRemover(playerName: string): (text: string) => string {
   const parts = [playerName.trim(), ...playerName.trim().split(/\s+/)]
     .filter((p) => p.length >= 2)
     .sort((a, b) => b.length - a.length);
-  if (parts.length === 0) return r;
+  if (parts.length === 0) return (t) => t;
   const pattern = new RegExp(`(?<![\\p{L}])(?:${parts.map(escapeRegExp).join("|")})('s|’s)?(?![\\p{L}])`, "giu");
-  const clean = (t: string) => t.replace(pattern, (_m, possessive?: string) => (possessive ? "the player’s" : "the player"));
+  return (t) => t.replace(pattern, (_m, possessive?: string) => (possessive ? "the player’s" : "the player"));
+}
+
+/** Safety net for the prompt's "never repeat a name" rule, applied to every field. */
+export function removeName(r: MentorResult, playerName: string): MentorResult {
+  const clean = nameRemover(playerName);
   return {
     feedback: r.feedback.map((f) => ({ ...f, text: clean(f.text) })),
     suggested_goal: r.suggested_goal === null ? null : clean(r.suggested_goal),

@@ -7,6 +7,7 @@ import {
   assembleSystemPrompt,
   buildUserMessage,
   limitResult,
+  nameRemover,
   removeName,
   MentorResultSchema,
   type MentorResult,
@@ -47,8 +48,9 @@ const UNAVAILABLE =
   "No feedback available right now. Try again, or save the goal as it is.";
 
 /**
- * `playerName` never goes to the API; it is only used to strip the name
- * from the response in case the model repeats one typed into the draft.
+ * `playerName` never goes to the API. It is stripped from the draft and the
+ * other goal texts before sending (a coach may have typed it), and from the
+ * response as a safety net.
  */
 export async function getGoalFeedback(
   today: string,
@@ -56,6 +58,7 @@ export async function getGoalFeedback(
   otherGoals: string[],
   playerName: string,
 ): Promise<MentorResponse> {
+  const clean = nameRemover(playerName);
   try {
     systemPrompt ??= loadSystemPrompt();
     client ??= new Anthropic();
@@ -71,7 +74,10 @@ export async function getGoalFeedback(
         },
       ],
       messages: [
-        { role: "user", content: buildUserMessage(today, draft, otherGoals) },
+        {
+          role: "user",
+          content: buildUserMessage(today, clean(draft), otherGoals.map(clean)),
+        },
       ],
       thinking: { type: "between_tools" },
       output_config: {

@@ -36,7 +36,7 @@ other_active_goals:
 - **No attendance.** Decided 2026-10-07: attendance says nothing about why a player missed sessions or how much they practise elsewhere, the player is usually present to answer that directly, and a count read out in front of the player can feel like judgement. The prompt asks about available time instead.
 - Later, once check-ins exist: recent check-in signals may be added here. Raw check-in free text is not added without a separate decision, since it can name third parties (see `CLAUDE.md`, BotMatcher section).
 - **No player ID.** `CLAUDE.md` allows the Goal Mentor to see the pseudonymous player ID, but the prompt does not need it: the app already knows which player the request belongs to. Leaving it out is the stricter reading of data minimization and costs nothing.
-- Never add the player's name, jersey number or contact details. The draft itself may still contain a name typed by the coach; the static caption under the input (`CLAUDE.md`, Data-Flow section) asks the coach not to, and the prompt tells the model not to repeat one.
+- Never add the player's name, jersey number or contact details. The draft and saved goal texts may still contain a name typed by the coach. The selected player's own name is replaced before sending (section 6a); other names rely on the static caption under the input (`CLAUDE.md`, Data-Flow section) and the prompt's rule not to repeat one.
 
 ## 4. Model
 
@@ -91,6 +91,7 @@ There is deliberately no score, rating or "quality" field, and none should be ad
 
 ## 6a. Name removal (safety net)
 
+- Before sending, the server replaces the selected player's name in the draft and in each other active goal text with "the player" (`nameRemover`, same matching rules as below). Saved goals are sent again on every later request, so a name typed once would otherwise keep reaching the API.
 - The prompt tells the model never to repeat a name from the draft. As a second line of defence, the server replaces the selected player's name in every field of the response with "the player" (`removeName` in `lib/goal-mentor-input.ts`): the full name and each part of it, case-insensitive, whole words only, keeping possessives ("the player's").
 - The name is read from the database on the server and never sent to the API.
 - This catches only the selected player's own name, not teammates or other people named in the draft. Detecting any name in the coach's input stays deferred (`CLAUDE.md`, Future Ideas).

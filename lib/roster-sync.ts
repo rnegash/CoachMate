@@ -65,6 +65,20 @@ export async function syncRoster(): Promise<RosterSyncResult> {
     if (error) throw new Error(error.message);
   }
 
+  // Goals are deleted when their player leaves the roster (CLAUDE.md,
+  // "Retention rule"). Covers every removed player, not just this sync's,
+  // so players removed before this rule existed are cleaned up too.
+  const { data: removed, error: removedError } = await db
+    .from("players")
+    .select("id")
+    .not("removed_at", "is", null);
+  if (removedError) throw new Error(removedError.message);
+  const removedIds = (removed ?? []).map((p) => p.id as string);
+  if (removedIds.length > 0) {
+    const { error } = await db.from("goals").delete().in("player_id", removedIds);
+    if (error) throw new Error(error.message);
+  }
+
   const { error: logError } = await db.from("sheet_syncs").insert({
     source: "roster",
     synced_at: now,

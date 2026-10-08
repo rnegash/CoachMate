@@ -8,6 +8,7 @@ import {
   MentorResultSchema,
   normalizeGoalText,
   referenceBody,
+  nameRemover,
   removeName,
 } from "@/lib/goal-mentor-input";
 
@@ -115,6 +116,19 @@ describe("limitResult", () => {
 
   it("treats a blank suggestion as none", () => {
     expect(limitResult({ feedback: [], suggested_goal: "  ", questions_for_player: [] }).suggested_goal).toBeNull();
+  });
+});
+
+describe("nameRemover", () => {
+  it("strips the player's name from coach text before it is sent", () => {
+    const clean = nameRemover("Lena Bauer");
+    expect(clean("Lena will call the stack")).toBe("the player will call the stack");
+    expect(["Bauer's dump", "hucks"].map(clean)).toEqual(["the player’s dump", "hucks"]);
+  });
+
+  it("returns text unchanged for a blank or one-letter name", () => {
+    expect(nameRemover(" ")("Lena throws")).toBe("Lena throws");
+    expect(nameRemover("L")("L throws")).toBe("L throws");
   });
 });
 

@@ -118,11 +118,24 @@ real name to the Claude API.
   is drafted, and a count read out in front of them can feel like
   judgement. Prompt and spec: `documentation/AI goal mentor/`
 - Does not see: real name, phone number, or any other direct identifier
+- Before sending, the server replaces the selected player's own name
+  with "the player" in the draft and in the other goal texts (a coach may
+  have typed it). Other people's names are not detected; the static
+  caption below covers them.
 - A static instructional caption is shown wherever free text (goal notes,
   Assistant Coach messages) is entered, stating that only the text itself
   reaches the AI — no names or contact details should be included. This
   is always-visible text, not active detection of what the coach actually
   typed (see Future Ideas).
+
+### Goals (stored)
+
+- Supabase only, no Sheet counterpart. Fields: goal text, `status`
+  (`active` / `completed`), `created_at`, `updated_at` (shown as the
+  goal's last activity), `completed_at` (decided 2026-10-08).
+- These are neutral lifecycle facts. No score, priority, progress or
+  AI-involvement field.
+- Deleted when the player is removed from the roster (see Retention rule).
 
 ### Assistant Coach
 
@@ -197,6 +210,9 @@ not deferred cleanup:
   player is removed from the roster, rather than on a fixed calendar
   duration. A player who never sends STOP and stays on the roster keeps
   their check-in history for as long as they're on the team.
+- Goals follow the same roster rule (decided 2026-10-08): a player's
+  goals are deleted when that player is removed from the roster (the
+  roster sync deletes them). STOP does not affect goals.
 - Deleting a player's check-in text deletes the whole record as stored —
   no separate redaction step for third-party mentions within it. A
   third-party's name disappearing is a byproduct of deleting the
