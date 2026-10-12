@@ -16,7 +16,7 @@ Covers Oct 5–8 (Week 3) and Oct 12–15 (Week 4). Landing page/marketing and W
    - `BotDelivery`: sees phone/Twilio/roster PII, never message-generation logic.
    - The player confirms each update ("share with your coach?") before it is stored; only goal-linked, confirmed check-ins with their raw text are persisted (changed 2026-10-08, see `CLAUDE.md`, "What gets persisted").
    - Includes: documenting the retention/deletion rule for check-in text and updating consent wording accordingly.
-   - Also where the workflow/agent flowchart (MUSS-Kriterium: "Prozess mit einem Flowchart visualisiert") gets produced.
+   - Also where the workflow/agent flowchart (MUSS-Kriterium: "Prozess mit einem Flowchart visualisiert") gets produced. Done 2026-10-12: `documentation/CoachMate_WhatsApp_Checkin_Flows.md` (process, data flow, retention).
 4. **Attendance — read from Google Sheets** — adds attendance history/trend to Player Detail.
 5. **Attendance — write to sheet from app (Take Attendance)** — completes the attendance round-trip (app → Sheets → pulled back into Supabase).
 6. **WhatsApp bot settings** — adds default + per-player bot-override toggle (Passive/proactive, Adaptive) to Player Detail. No advice-giving toggle (removed from scope per Architecture decision log).
