@@ -73,7 +73,7 @@ export function askPick(goals: FlowGoal[], replacesDraft = false): string {
     `${replacesDraft ? REPLACED : ""}Which of your goals is this update about? Reply with its number:`,
     goalList(goals),
     "",
-    "Or reply NO to discard it. If it isn't about a goal, it won't be shared and is deleted within 2 days.",
+    "Or reply NO to discard it. If it isn't about a goal, it won't be shared: it's held for up to 24 hours, then deleted within the next day.",
   ].join("\n");
 }
 

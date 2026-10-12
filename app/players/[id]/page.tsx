@@ -4,8 +4,7 @@ import { AttendanceStrip } from "@/components/AttendanceStrip";
 import { GoalList } from "@/components/GoalList";
 import { getPlayerAttendance } from "@/lib/attendance";
 import { attendanceSummary, sessionLabel } from "@/lib/attendance-marks";
-import { whatsappStatusLine } from "@/lib/checkin-display";
-import { listPlayerCheckins, whatsappStatus } from "@/lib/checkins";
+import { listPlayerCheckins } from "@/lib/checkins";
 import { formatDate } from "@/lib/format";
 import { listPlayerGoals } from "@/lib/goals";
 import { getPlayer } from "@/lib/players";
@@ -23,12 +22,11 @@ const STRIP_WINDOW = 8;
 
 export default async function PlayerDetailPage({ params }: PageProps<"/players/[id]">) {
   const { id } = await params;
-  const [player, attendance, goals, checkins, whatsapp] = await Promise.all([
+  const [player, attendance, goals, checkins] = await Promise.all([
     getPlayer(id),
     getPlayerAttendance(id),
     listPlayerGoals(id),
     listPlayerCheckins(id),
-    whatsappStatus(id),
   ]);
   if (!player) notFound();
 
@@ -62,7 +60,6 @@ export default async function PlayerDetailPage({ params }: PageProps<"/players/[
         )}
       </Section>
       <Section title="Goals">
-        <p className="text-label font-normal text-ink-muted">{whatsappStatusLine(whatsapp)}</p>
         <GoalList
           playerId={player.id}
           active={goals.active}

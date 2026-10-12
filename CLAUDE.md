@@ -217,20 +217,22 @@ Decided 2026-10-08. The bot only handles updates on a player's active
 goals; anything else is not stored. If the bot gains other features,
 each needs its own decision here.
 
-- **Shared check-ins (`goal_checkins`):** player ID + goal ID + the
-  player's raw message text + timestamp. Stored only after the player
+- **Shared check-ins (`goal_checkins`):** row ID + player ID + goal ID +
+  the player's raw message text + timestamp. Stored only after the player
   answers YES to "share this update with your coach?", asked for every
   update. The single implied signal is "worked on it"; there is no signal,
   score or status column. The text can name third parties.
 - **Drafts (`checkin_drafts`):** temporary, at most one per player:
-  player ID, the message text, and the goal ID once matched or picked.
-  Held only while the bot waits for the goal number or YES/NO. Never
-  shown to the coach.
-- **Contacts (`player_contacts`):** player ID → phone, copied from the
-  optional `phone` column of the Roster Sheet. Read only by BotDelivery;
-  never shown in the coach UI.
+  player ID, the message text, the goal ID once matched or picked, and
+  created/expiry timestamps (`expires_at`, 24 h). Held only while the bot
+  waits for the goal number or YES/NO. Never shown to the coach.
+- **Contacts (`player_contacts`):** player ID → phone (+ `updated_at`),
+  copied from the optional `phone` column of the Roster Sheet. Read only
+  by BotDelivery; never shown in the coach UI.
 - **Consent (`whatsapp_consents`):** player ID, opt-in and opt-out
-  timestamps, and the version of the consent wording agreed to.
+  timestamps, the version of the consent wording agreed to, and
+  `updated_at`. Not shown in the coach UI — neither whether a player has
+  joined nor whether or when they sent STOP (decided 2026-10-12).
 - Not stored: messages that aren't confirmed with YES, messages from
   numbers not on the roster, and messages from players who haven't opted
   in or have sent STOP.
