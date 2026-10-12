@@ -1,12 +1,21 @@
 import Link from "next/link";
 import { completeGoalAction } from "@/app/actions/goals";
 import { Button } from "@/components/Button";
+import { CheckinList } from "@/components/CheckinList";
 import { formatDate } from "@/lib/format";
 import type { Goal } from "@/lib/goals";
 
-type Props = { playerId: string; active: Goal[]; completed: Goal[] };
+type Checkin = { id: string; text: string; created_at: string };
 
-export function GoalList({ playerId, active, completed }: Props) {
+type Props = {
+  playerId: string;
+  active: Goal[];
+  completed: Goal[];
+  /** Shared check-ins per goal ID, newest first. */
+  checkins: Map<string, Checkin[]>;
+};
+
+export function GoalList({ playerId, active, completed, checkins }: Props) {
   return (
     <div className="flex flex-col gap-space-3">
       {active.length === 0 ? (
@@ -24,6 +33,7 @@ export function GoalList({ playerId, active, completed }: Props) {
                   </Button>
                 </form>
               </div>
+              <CheckinList checkins={checkins.get(g.id) ?? []} />
             </li>
           ))}
         </ul>
@@ -48,6 +58,7 @@ export function GoalList({ playerId, active, completed }: Props) {
                 <span className="text-caption text-ink-muted">
                   Completed {g.completed_at ? formatDate(g.completed_at) : ""}
                 </span>
+                <CheckinList checkins={checkins.get(g.id) ?? []} />
               </li>
             ))}
           </ul>

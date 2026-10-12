@@ -88,6 +88,17 @@ export function nameRemover(playerName: string): (text: string) => string {
   return (t) => t.replace(pattern, (_m, possessive?: string) => (possessive ? "the player’s" : "the player"));
 }
 
+/**
+ * Goal text as stored: normalised, with the player's own name replaced.
+ * Saved goals are later sent to Claude (Goal Mentor context, check-in
+ * matcher), and the check-in matcher can't strip names itself because it
+ * never sees roster names. Null when the text is empty or too long.
+ */
+export function goalTextForStorage(draft: string, playerName: string): string | null {
+  const text = normalizeGoalText(draft);
+  return text && nameRemover(playerName)(text);
+}
+
 /** Safety net for the prompt's "never repeat a name" rule, applied to every field. */
 export function removeName(r: MentorResult, playerName: string): MentorResult {
   const clean = nameRemover(playerName);

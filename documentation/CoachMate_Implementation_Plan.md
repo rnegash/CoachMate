@@ -10,17 +10,17 @@ Covers Oct 5–8 (Week 3) and Oct 12–15 (Week 4). Landing page/marketing and W
 ## Functional slices (prioritized)
 
 1. **Roster via Google Sheets + basic overview** — includes a basic Player Detail shell (reachable by tapping a row), static roster fields only; later slices add data to it.
-2. **Player goal + AI refine** — adds goals list to Player Detail. Includes: client-side name-pattern warning before free text is sent to the Goal Mentor API (Compliance Report open item).
+2. **Player goal + AI refine** — adds goals list to Player Detail. Includes: static no-names caption on the goal input (active name-pattern detection deferred, see `CLAUDE.md`).
 3. **WhatsApp integration (check-ins)** — built as two least-privilege components per the Technical Architecture doc:
    - `BotMatcher`: sees player ID + goal text only, never phone/contact info.
    - `BotDelivery`: sees phone/Twilio/roster PII, never message-generation logic.
-   - Only `player ID + goal ID + check-in signal` is persisted — raw check-in free text is not stored.
+   - The player confirms each update ("share with your coach?") before it is stored; only goal-linked, confirmed check-ins with their raw text are persisted (changed 2026-10-08, see `CLAUDE.md`, "What gets persisted").
    - Includes: documenting the retention/deletion rule for check-in text and updating consent wording accordingly.
    - Also where the workflow/agent flowchart (MUSS-Kriterium: "Prozess mit einem Flowchart visualisiert") gets produced.
 4. **Attendance — read from Google Sheets** — adds attendance history/trend to Player Detail.
 5. **Attendance — write to sheet from app (Take Attendance)** — completes the attendance round-trip (app → Sheets → pulled back into Supabase).
 6. **WhatsApp bot settings** — adds default + per-player bot-override toggle (Passive/proactive, Adaptive) to Player Detail. No advice-giving toggle (removed from scope per Architecture decision log).
-7. **AI assistant** — stateless Assistant Coach chat, no player context, no DB access. Includes: client-side name-pattern warning on this free-text entry point too.
+7. **AI assistant** — stateless Assistant Coach chat, no player context, no DB access. Includes: the same static no-names caption on the message input.
 
 Not tied to one slice: once both external processors are live (Claude API in slice 2, Twilio in slice 3), confirm DPA/SCC status with both providers (Compliance Report open item).
 
@@ -29,9 +29,9 @@ Not tied to one slice: once both external processors are live (Claude API in sli
 | Days | Slices | Deliverable |
 |---|---|---|
 | 1–2 | 1 (Roster + overview) + 4 (Attendance read) | Coach sees roster + attendance history in Player Detail, read-only |
-| 3–4 | 5 (Take Attendance — write) + 2 (Goal + AI refine, incl. name-pattern warning) | Coach can mark attendance and capture/refine goals |
+| 3–4 | 5 (Take Attendance — write) + 2 (Goal + AI refine, incl. no-names caption) | Coach can mark attendance and capture/refine goals |
 | 5–6 | 3 (WhatsApp check-ins) alone — biggest slice; flowchart + retention/consent docs run as lightweight parallel paperwork, not deep design; BotMatcher/BotDelivery get only the core round-trip, not edge-case hardening | A WhatsApp check-in updates a goal's status signal in the sandbox |
-| 7–8 | 6 (Bot settings) + 7 (AI assistant, incl. name-pattern warning) + DPA/SCC status check | Bot configuration + Assistant Coach chat working; compliance status documented |
+| 7–8 | 6 (Bot settings) + 7 (AI assistant, incl. no-names caption) + DPA/SCC status check | Bot configuration + Assistant Coach chat working; compliance status documented |
 
 ## EU AI Act flags carried into this plan
 

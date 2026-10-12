@@ -92,6 +92,7 @@ There is deliberately no score, rating or "quality" field, and none should be ad
 ## 6a. Name removal (safety net)
 
 - Before sending, the server replaces the selected player's name in the draft and in each other active goal text with "the player" (`nameRemover`, same matching rules as below). Saved goals are sent again on every later request, so a name typed once would otherwise keep reaching the API.
+- On save, the goal text is stored with the player's name replaced the same way (`goalTextForStorage`). Saved goals also reach the check-in matcher (`documentation/AI checkin matcher/`), which never sees roster names and so can't strip them itself.
 - The prompt tells the model never to repeat a name from the draft. As a second line of defence, the server replaces the selected player's name in every field of the response with "the player" (`removeName` in `lib/goal-mentor-input.ts`): the full name and each part of it, case-insensitive, whole words only, keeping possessives ("the player's").
 - The name is read from the database on the server and never sent to the API.
 - This catches only the selected player's own name, not teammates or other people named in the draft. Detecting any name in the coach's input stays deferred (`CLAUDE.md`, Future Ideas).

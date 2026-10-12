@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { PLAYER_ID_FORMAT, parseRosterRows, rosterColumnIndex } from "@/lib/roster-sheet";
+import {
+  normalizePhone,
+  PLAYER_ID_FORMAT,
+  parseRosterRows,
+  rosterColumnIndex,
+  staleContactIds,
+} from "@/lib/roster-sheet";
 import type { CellValue, Columns } from "@/lib/sheet-cells";
 
 // Build readColumns()-shaped input from data rows (row 2 down), columns in header order.
@@ -10,7 +16,8 @@ function sheet(rows: CellValue[][]): { columns: Columns; rowCount: number } {
   return { columns, rowCount: rows.length };
 }
 
-const IDX = { id: 0, name: 1, jersey: 2 };
+const IDX = { id: 0, name: 1, jersey: 2, phone: -1 };
+const IDX_PHONE = { id: 0, name: 1, jersey: -1, phone: 2 };
 
 describe("PLAYER_ID_FORMAT", () => {
   it("accepts opaque P-number ids", () => {
@@ -26,11 +33,11 @@ describe("PLAYER_ID_FORMAT", () => {
 
 describe("rosterColumnIndex", () => {
   it("finds columns case- and whitespace-insensitively in any order", () => {
-    expect(rosterColumnIndex(["Name", " PLAYER_ID ", "phone", "Jersey"])).toEqual({ id: 1, name: 0, jersey: 3 });
+    expect(rosterColumnIndex(["Name", " PLAYER_ID ", "phone", "Jersey"])).toEqual({ id: 1, name: 0, jersey: 3, phone: 2 });
   });
 
   it("reports missing columns as -1", () => {
-    expect(rosterColumnIndex(["player_id"])).toEqual({ id: 0, name: -1, jersey: -1 });
+    expect(rosterColumnIndex(["player_id"])).toEqual({ id: 0, name: -1, jersey: -1, phone: -1 });
   });
 });
 
@@ -47,6 +54,8 @@ describe("parseRosterRows", () => {
       ],
       skipped: [],
       presentIds: new Set(["P001", "P002"]),
+      contacts: [],
+      phoneIssues: [],
     });
   });
 
@@ -87,8 +96,102 @@ describe("parseRosterRows", () => {
 
   it("works without a jersey column", () => {
     const { columns, rowCount } = sheet([["P001", "Anna"]]);
-    expect(parseRosterRows(columns, rowCount, { id: 0, name: 1, jersey: -1 }).rows).toEqual([
+    expect(parseRosterRows(columns, rowCount, { id: 0, name: 1, jersey: -1, phone: -1 }).rows).toEqual([
       { id: "P001", name: "Anna", jersey_number: null },
     ]);
+  });
+});
+
+describe("normalizePhone", () => {
+  it("strips separators and keeps E.164", () => {
+    expect(normalizePhone("+49 176 1234-5678")).toBe("+4917612345678");
+    expect(normalizePhone("+1 (415) 555.0100")).toBe("+14155550100");
+    expect(normalizePhone("+4917612345678")).toBe("+4917612345678");
+  });
+
+  it("turns a leading 00 into +", () => {
+    expect(normalizePhone("0049 176 12345678")).toBe("+4917612345678");
+  });
+
+  it("drops a (0) trunk prefix after the country code", () => {
+    expect(normalizePhone("+49 (0)176 12345678")).toBe("+4917612345678");
+  });
+
+  it("rejects numbers without a country code or outside E.164", () => {
+    for (const raw of ["0176 12345678", "4917612345678", "+0176123456", "+12345", "+491761234567890123", "call me", ""]) {
+      expect(normalizePhone(raw)).toBeNull();
+    }
+  });
+});
+
+describe("parseRosterRows phone column", () => {
+  it("collects valid phones as contacts, normalized", () => {
+    const { columns, rowCount } = sheet([
+      ["P001", "Anna", "+49 176 12345678"],
+      ["P002", "Mia", ""],
+    ]);
+    const result = parseRosterRows(columns, rowCount, IDX_PHONE);
+    expect(result.contacts).toEqual([{ player_id: "P001", phone: "+4917612345678" }]);
+    expect(result.phoneIssues).toEqual([]);
+  });
+
+  it("still syncs a row with an invalid phone and warns without the number", () => {
+    const { columns, rowCount } = sheet([["P001", "Anna", "0176 12345678"]]);
+    const result = parseRosterRows(columns, rowCount, IDX_PHONE);
+    expect(result.rows.map((r) => r.id)).toEqual(["P001"]);
+    expect(result.skipped).toEqual([]);
+    expect(result.contacts).toEqual([]);
+    expect(result.phoneIssues).toEqual([{ row: 2, reason: "phone not in international format" }]);
+    expect(JSON.stringify(result.phoneIssues)).not.toContain("12345678");
+  });
+
+  it("keeps neither player when two share a phone, and warns for both rows", () => {
+    const { columns, rowCount } = sheet([
+      ["P001", "Anna", "+4917612345678"], // row 2
+      ["P002", "Mia", "bad"], // row 3
+      ["P003", "Jonas", "0049 176 12345678"], // row 4
+      ["P004", "Lea", "+14155550100"], // row 5
+    ]);
+    const result = parseRosterRows(columns, rowCount, IDX_PHONE);
+    expect(result.rows).toHaveLength(4);
+    expect(result.contacts).toEqual([{ player_id: "P004", phone: "+14155550100" }]);
+    expect(result.phoneIssues).toEqual([
+      { row: 2, reason: "duplicate phone" },
+      { row: 3, reason: "phone not in international format" },
+      { row: 4, reason: "duplicate phone" },
+    ]);
+  });
+
+  it("ignores the phone of a skipped row", () => {
+    const { columns, rowCount } = sheet([["P001", "", "+4917612345678"]]);
+    const result = parseRosterRows(columns, rowCount, IDX_PHONE);
+    expect(result.contacts).toEqual([]);
+    expect(result.phoneIssues).toEqual([]);
+  });
+});
+
+describe("staleContactIds", () => {
+  const c = (player_id: string, phone: string) => ({ player_id, phone });
+
+  it("keeps unchanged contacts", () => {
+    expect(staleContactIds([c("P001", "+4917612345678")], [c("P001", "+4917612345678")])).toEqual([]);
+  });
+
+  it("marks removed, cleared and changed contacts", () => {
+    expect(
+      staleContactIds(
+        [c("P001", "+4917612345678"), c("P002", "+4917600000000"), c("P003", "+14155550100")],
+        [c("P002", "+4917611111111"), c("P003", "+14155550100")],
+      ),
+    ).toEqual(["P001", "P002"]);
+  });
+
+  it("marks both sides of a phone swap, so the upsert can't clash", () => {
+    expect(
+      staleContactIds(
+        [c("P001", "+4917612345678"), c("P002", "+14155550100")],
+        [c("P001", "+14155550100"), c("P002", "+4917612345678")],
+      ),
+    ).toEqual(["P001", "P002"]);
   });
 });

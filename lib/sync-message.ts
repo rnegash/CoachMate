@@ -10,6 +10,11 @@ export function rosterSyncMessage(r: RosterSyncResult): string[] {
   if (r.skipped.length > 0) {
     parts.push(`Skipped ${r.skipped.map((s) => `row ${s.row} (${s.reason})`).join(", ")}.`);
   }
+  if (r.phoneIssues.length > 0) {
+    parts.push(
+      `${plural(r.phoneIssues.length, "phone number")} not used: ${r.phoneIssues.map((s) => `row ${s.row} (${s.reason})`).join(", ")}.`,
+    );
+  }
   return parts;
 }
 

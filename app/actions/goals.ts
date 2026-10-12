@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { localIsoDate } from "@/lib/format";
 import { getGoalFeedback, type MentorResponse } from "@/lib/goal-mentor";
-import { GOAL_TEXT_MAX, normalizeGoalText } from "@/lib/goal-mentor-input";
+import { GOAL_TEXT_MAX, goalTextForStorage, normalizeGoalText } from "@/lib/goal-mentor-input";
 import { activeGoalTexts, completeGoal, createGoal } from "@/lib/goals";
 import { getPlayer } from "@/lib/players";
 import { PLAYER_ID_FORMAT } from "@/lib/roster-sheet";
@@ -29,10 +29,12 @@ export async function goalFeedbackAction(playerId: string, draft: string): Promi
 /** Saves the goal and returns to Player Detail; returns an error message otherwise. */
 export async function saveGoalAction(playerId: string, draft: string): Promise<string> {
   checkPlayerId(playerId);
-  const text = normalizeGoalText(draft);
-  if (!text) return TEXT_ERROR;
+  if (!normalizeGoalText(draft)) return TEXT_ERROR;
   try {
-    await createGoal(playerId, text);
+    const player = await getPlayer(playerId);
+    if (!player) return "Unknown player.";
+    // Stored without the player's own name (see goalTextForStorage).
+    await createGoal(playerId, goalTextForStorage(draft, player.name)!);
   } catch {
     return "Saving failed. Try again.";
   }

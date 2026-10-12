@@ -11,7 +11,7 @@ describe("plural", () => {
 
 describe("rosterSyncMessage", () => {
   it("reports only the count when nothing was removed or skipped", () => {
-    expect(rosterSyncMessage({ synced: 1, removed: 0, skipped: [] })).toEqual(["Roster: 1 player."]);
+    expect(rosterSyncMessage({ synced: 1, removed: 0, skipped: [], phoneIssues: [] })).toEqual(["Roster: 1 player."]);
   });
 
   it("lists removals and skipped rows", () => {
@@ -23,11 +23,31 @@ describe("rosterSyncMessage", () => {
           { row: 4, reason: "missing name" },
           { row: 9, reason: "duplicate player_id" },
         ],
+        phoneIssues: [],
       }),
     ).toEqual([
       "Roster: 38 players.",
       "2 no longer in the Sheet.",
       "Skipped row 4 (missing name), row 9 (duplicate player_id).",
+    ]);
+  });
+});
+
+describe("rosterSyncMessage phone issues", () => {
+  it("counts and lists unused phone numbers by row only", () => {
+    expect(
+      rosterSyncMessage({
+        synced: 3,
+        removed: 0,
+        skipped: [],
+        phoneIssues: [
+          { row: 2, reason: "duplicate phone" },
+          { row: 5, reason: "phone not in international format" },
+        ],
+      }),
+    ).toEqual([
+      "Roster: 3 players.",
+      "2 phone numbers not used: row 2 (duplicate phone), row 5 (phone not in international format).",
     ]);
   });
 });

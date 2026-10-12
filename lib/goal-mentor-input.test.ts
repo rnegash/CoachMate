@@ -8,6 +8,7 @@ import {
   MentorResultSchema,
   normalizeGoalText,
   referenceBody,
+  goalTextForStorage,
   nameRemover,
   removeName,
 } from "@/lib/goal-mentor-input";
@@ -129,6 +130,19 @@ describe("nameRemover", () => {
   it("returns text unchanged for a blank or one-letter name", () => {
     expect(nameRemover(" ")("Lena throws")).toBe("Lena throws");
     expect(nameRemover("L")("L throws")).toBe("L throws");
+  });
+});
+
+describe("goalTextForStorage", () => {
+  it("normalises the text and replaces the player's own name", () => {
+    expect(goalTextForStorage("  Lena  throws 20 hucks; Bauer's dump too ", "Lena Bauer")).toBe(
+      "the player throws 20 hucks; the player’s dump too",
+    );
+  });
+
+  it("keeps other names and rejects empty text", () => {
+    expect(goalTextForStorage("throw to Max", "Lena")).toBe("throw to Max");
+    expect(goalTextForStorage("   ", "Lena")).toBeNull();
   });
 });
 

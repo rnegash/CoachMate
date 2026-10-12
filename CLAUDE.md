@@ -120,7 +120,9 @@ real name to the Claude API.
 - Does not see: real name, phone number, or any other direct identifier
 - Before sending, the server replaces the selected player's own name
   with "the player" in the draft and in the other goal texts (a coach may
-  have typed it). Other people's names are not detected; the static
+  have typed it). Saved goals are stored the same way (decided
+  2026-10-08), because the check-in matcher sends them to Claude and
+  can't strip names itself. Other people's names are not detected; the static
   caption below covers them.
 - A static instructional caption is shown wherever free text (goal notes,
   Assistant Coach messages) is entered, stating that only the text itself
@@ -151,6 +153,22 @@ ID linkage across systems (Sheets ↔ Supabase ↔ Claude API) is a known
 residual risk. Mitigation is strict per-system access rights, not
 elimination of the linkage itself.
 
+The BotMatcher/BotDelivery split is enforced in code only (accepted
+2026-10-08 for the pilot). Both sides run in the same Vercel deployment
+and use the Supabase service-role key, so the database doesn't stop either
+side reading the other's tables; `lib/bot-boundary.test.ts` catches direct
+references only. Separate database roles were considered and not built:
+with the service-role key in the same deployment they would only catch
+mistakes, not isolate the sides. If the split must hold against faulty or
+compromised code, the step that delivers it is separate deployments, each
+holding only its own scoped key.
+
+Twilio, WhatsApp (Meta) and Anthropic keep their own copies of messages
+under their own retention rules; CoachMate's deletion rules only cover
+Supabase. Accepted 2026-10-08 and disclosed in the consent text. To do:
+check whether Twilio's message redaction setting is available on this
+account and, if so, turn it on and record it here.
+
 ### Phrasing rule for attendance/engagement data
 
 Any attendance or engagement data surfaced to the coach must read as
@@ -161,16 +179,23 @@ priority/urgency score.
 
 ### Open items (not yet resolved — do not assume closed)
 
-- No retention/deletion rule defined yet for check-in free text
-  (GoalCheckins) — flagged 🔴 in Compliance Status
-- Consent wording does not yet cover storing that text
+- Retention/deletion rule for check-in text: defined and built
+  (2026-10-08, see Retention rule); Compliance Status still to be updated
+- Consent wording covering stored check-in text: drafted in
+  `lib/bot-consent.ts` (2026-10-08), not yet reviewed outside the team
 - DPA/SCC confirmation with Claude API provider and Twilio outstanding
 - Roster is assumed adults-only (no parental consent handling built)
 
 ## BotMatcher / BotDelivery Boundary Split
 
-WhatsApp check-ins are split into two components specifically so no single
-piece of code sees both message content and contact PII at once.
+WhatsApp check-ins are split into two components so that the code that
+interprets messages never sees contact PII, and the code that handles
+contact PII never interprets messages. BotMatcher (matching and reply
+texts) never sees phone numbers or roster data; BotDelivery (phone
+numbers, consent, Twilio) never matches goals or calls the AI. Only the
+webhook entry point (`app/api/whatsapp/route.ts` → `handleIncoming`) holds
+both the phone number and the message text, and it only resolves the
+player ID and passes the text on.
 
 ### BotMatcher
 
@@ -188,17 +213,34 @@ piece of code sees both message content and contact PII at once.
 
 ### What gets persisted
 
-Raw player check-in free text **is** persisted (coach needs to read the
-actual message, not just a derived signal) — alongside player ID + goal ID
+Decided 2026-10-08. The bot only handles updates on a player's active
+goals; anything else is not stored. If the bot gains other features,
+each needs its own decision here.
 
-- check-in signal. This text can name third parties.
-
-Because this is stored, the following are must-build for this slice,
-not deferred cleanup:
-
-- A retention/deletion rule for stored check-in text
-- Consent wording that explicitly covers storing that text (current
-  wording does not yet)
+- **Shared check-ins (`goal_checkins`):** player ID + goal ID + the
+  player's raw message text + timestamp. Stored only after the player
+  answers YES to "share this update with your coach?", asked for every
+  update. The single implied signal is "worked on it"; there is no signal,
+  score or status column. The text can name third parties.
+- **Drafts (`checkin_drafts`):** temporary, at most one per player:
+  player ID, the message text, and the goal ID once matched or picked.
+  Held only while the bot waits for the goal number or YES/NO. Never
+  shown to the coach.
+- **Contacts (`player_contacts`):** player ID → phone, copied from the
+  optional `phone` column of the Roster Sheet. Read only by BotDelivery;
+  never shown in the coach UI.
+- **Consent (`whatsapp_consents`):** player ID, opt-in and opt-out
+  timestamps, and the version of the consent wording agreed to.
+- Not stored: messages that aren't confirmed with YES, messages from
+  numbers not on the roster, and messages from players who haven't opted
+  in or have sent STOP.
+- Which tables each side uses: BotDelivery reads `player_contacts`,
+  `players` (roster status only) and `whatsapp_consents`; BotMatcher reads
+  `goals` and writes `checkin_drafts` and `goal_checkins`. On STOP,
+  BotDelivery deletes the draft by calling BotMatcher's `discardDraft`
+  (player ID only), never by touching `checkin_drafts` itself. Enforced in code
+  by `lib/bot-boundary.test.ts`, not by the database: both use the
+  service-role key (accepted residual risk, see "Residual risk").
 
 ### Retention rule
 
@@ -213,6 +255,19 @@ not deferred cleanup:
 - Goals follow the same roster rule (decided 2026-10-08): a player's
   goals are deleted when that player is removed from the roster (the
   roster sync deletes them). STOP does not affect goals.
+- Drafts are deleted on YES (moved to `goal_checkins`), on NO, when a
+  new message replaces them, immediately on STOP, on roster removal, and
+  after 24 h (the bot ignores an expired draft at once; the daily job
+  deletes it within the next day).
+- Timing: one daily job (`/api/cron/retention`, 03:00 UTC) first runs the
+  roster sync, then the purge (decided 2026-10-08). So roster-removal
+  deletion happens within a day of the Sheet change, and STOP deletion
+  7–8 days after STOP. Texts shown to players and the coach say "within a
+  day", not an exact time. A manual sync from the app still applies
+  removals at once.
+- START within the 7-day grace period cancels the deletion.
+- Only the first STOP sets the opt-out date; repeating STOP doesn't
+  restart the 7 days. After a START, the next STOP starts a new period.
 - Deleting a player's check-in text deletes the whole record as stored —
   no separate redaction step for third-party mentions within it. A
   third-party's name disappearing is a byproduct of deleting the
@@ -222,14 +277,28 @@ not deferred cleanup:
 
 ### Clarifying-question text
 
-The "unclear check-in" clarifying question sent back to a player is
-templated/fixed text, not freely AI-generated. Treat it as outside Art. 50
+Every message the bot sends — consent text, "which goal?", "share with
+your coach?", confirmations — is templated/fixed text, not freely
+AI-generated (`lib/bot-consent.ts`, `lib/checkin-flow.ts`). Claude only
+picks which goal a message is about. Bot messages quote the player's goal texts
+unlabeled (decided 2026-10-08): a saved goal is text the coach accepted or
+edited, not raw AI output, and the "Goals may have been written with the
+help of AI." footnote stays a coach-UI notice only. Treat it as outside Art. 50
 labeling scope. If this is ever changed to be dynamically generated,
 flag it for an Art. 50 labeling review before shipping.
 
 ### Consent / opt-in
 
-WhatsApp opt-in is keyword-based, timestamped, and revocable via "STOP".
+WhatsApp opt-in is keyword-based ("START"), timestamped, stores the
+consent wording version, and is revocable via "STOP". A player on the
+roster who hasn't opted in gets the consent text and nothing else; their
+message is not stored. Consent belongs to the number that sent START: when a
+player's phone changes or is removed in the Sheet, the roster sync resets
+their opt-in and deletes any pending draft, so the new number must send
+START itself (decided 2026-10-08). The same reset happens when a player
+is removed from the roster, so a returning player opts in again under the
+current wording. An earlier STOP and its 7-day deletion are kept. The consent text states the AI, the per-update
+YES before sharing, the draft and retention periods, and US processing.
 Twilio webhooks must be signature-verified. US processing (via Twilio) is
 accepted but must be documented openly, not hidden in fine print.
 
@@ -280,11 +349,18 @@ flowchart (MUSS-Kriterium) is tracked as a parallel deliverable.
   surfaces in the UI (e.g. a DB column called `urgency_score` or
   `at_risk` is itself a violation of this rule, not just its display).
 
-### Name-pattern warning (cross-reference)
+### No-names controls (cross-reference)
 
-- Required client-side before free text reaches Goal Mentor or Assistant
-  Coach APIs — defined in the data-flow section above, restated here
-  because it's a compliance control, not just a UX nicety.
+- Required: the static instructional caption on every free-text input
+  whose text reaches the Claude API (goal drafts, Assistant Coach
+  messages) — defined in the data-flow section above, restated here
+  because it's a compliance control, not just a UX nicety. Do not remove
+  it or hide it behind a setting.
+- Server-side, the selected player's own name is replaced with "the
+  player" in Goal Mentor requests and in saved goal texts (see Goal
+  Mentor section). Other names are not detected.
+- Active name-pattern detection is deferred (see Future Ideas), not
+  required.
 
 ## For Subagents & Skills
 

@@ -17,8 +17,11 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Everything except the login page itself and static assets.
-  // Note: the Twilio webhook route will need an exemption here later —
-  // it authenticates via Twilio signature verification instead.
-  matcher: ["/((?!login(?:/|$)|_next/static|_next/image|favicon.ico$).*)"],
+  // Everything except the login page itself, static assets, and two
+  // machine-called routes with their own checks: the Twilio webhook
+  // (signature verification) and the Vercel cron (CRON_SECRET). Exact
+  // paths only, so a new route is gated until it is exempted on purpose.
+  matcher: [
+    "/((?!login(?:/|$)|api/whatsapp$|api/cron/retention$|_next/static|_next/image|favicon.ico$).*)",
+  ],
 };
