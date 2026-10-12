@@ -4,9 +4,9 @@ Sep 28, 2026 · @Rufael Negash
 
 ## Overview
 
-This document hands off the Week 2 (Sep 28–Oct 4) lo/mid-fi prototype scope for CoachMate to design. It follows from the research synthesis (simulated interview, personas, customer journey) and the flow/screen definitions worked out with the project lead.
+This document hands off the lo/mid-fi prototype (Sep 28–Oct 4) scope for CoachMate to design. It follows from the research synthesis (simulated interview, personas, customer journey) and the flow/screen definitions worked out with the project lead.
 
-Scope: 3 flows — Weekly Briefing (incl. Attendance), Goal Capture (incl. AI Refine), and AI Assistant Coach — plus a Bot Settings screen for default WhatsApp bot behavior. Player-facing (Lena) flow and the full WhatsApp bot build are deferred to Week 3 (see Deferred / Out of Scope).
+Scope: 3 flows — Weekly Briefing (incl. Attendance), Goal Capture (incl. AI Refine), and AI Assistant Coach — plus a Bot Settings screen for default WhatsApp bot behavior. Player-facing (Lena) flow and the full WhatsApp bot build are deferred to the build phase (see Deferred / Out of Scope).
 
 ## Flows Summary
 
@@ -26,7 +26,7 @@ Entry point each week. A factual signal list, not a to-do list — no urgency ba
 - No action buttons on the row itself — tapping a row opens Player Detail
   **States:** player with no goal set yet; player with no recent attendance change (neutral, still shown); empty state for a filter/group with no matches.
 
-**Open item:** gender is a new stored field with no current home in the data model or consent/governance scope (currently "player ID + behavioral signals" only) — needs to be added to both before build.
+**Open item:** gender is a new stored field with no current home in the data model or consent/governance scope (at the time "player ID + behavioral signals"; superseded 2026-10-12: the Claude API now sees free text only, see Architecture decision 9) — needs to be added to both before build.
 
 ## Screen 2: Take Attendance
 
@@ -96,17 +96,17 @@ Default WhatsApp bot behavior for all players without an individual override (ov
 
 - [ ] Should the Assistant Coach chat have persistent, browsable history, or is each session stateless? (Screen 5)
 - [ ] Should the assistant-coach chat have any memory/context of the specific team, or is it general knowledge only?
-- [ ] Where does the Week 2 pilot test (1–2 people) sit — Alex only, or does it include a player?
+- [ ] Where does the first pilot test (1–2 people) sit — Alex only, or does it include a player?
 
 ## Constraints & Compliance Flags
 
 - **Art. 50 EU AI Act (AI-content labeling):** applies to every AI-generated output surfaced anywhere in this prototype — SMART-goal suggestions (Screen 4), Assistant Coach responses (Screen 5), and any bot advice sent to a player (Screen 6). The bot-advice case is the strictest, since it can reach a player directly with no coach review step.
-- **Data minimization / governance:** the current data model and consent scope are defined as "player ID + behavioral signals" only (no names, phone numbers, or addresses reaching the agent). Adding gender as a stored, groupable field (Screen 1) is new and needs to be added to both the data model and the governance/consent documentation before build.
+- **Data minimization / governance:** the current data model and consent scope are defined at the time as "player ID + behavioral signals" only (superseded 2026-10-12: free text only, see Architecture decision 9) (no names, phone numbers, or addresses reaching the agent). Adding gender as a stored, groupable field (Screen 1) is new and needs to be added to both the data model and the governance/consent documentation before build.
 - **Consent (WhatsApp):** if bot advice-giving is enabled (Screen 6), consider whether the existing opt-in consent message needs to explicitly cover receiving AI-generated advice, not only AI-labeled goal suggestions reviewed by the coach.
 
 ## Deferred / Out of Scope (this prototype)
 
-- Full WhatsApp bot build (Week 3, per Project Planning milestones)
+- Full WhatsApp bot build (after the prototype, per Project Planning milestones)
 - Player-facing (Lena) flow — to follow once the trainer-facing core is validated
 - Google Sheets pluggable import (team roster) and attendance write-back to Sheets — technical/architecture requirement tracked separately, to be pulled in at build stage, not derived from this research/flow work
-- Bot-steering settings shown in this prototype (Screens 3 & 6) are visual exploration only — the underlying WhatsApp bot they configure is not built until Week 3
+- Bot-steering settings shown in this prototype (Screens 3 & 6) are visual exploration only — the underlying WhatsApp bot they configure is not built until the build phase

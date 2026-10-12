@@ -60,7 +60,7 @@ rules that apply regardless of which slice is active.
   risk; WhatsApp already covers reaching people without opening the app).
   Revisit only if time remains after core slices.
 
-### In scope now (Week 2–3)
+### In scope now
 
 - Coach Web App (Next.js) — overview/briefing, attendance, player detail,
   goal capture + AI refine, assistant coach chat, bot settings
@@ -104,8 +104,8 @@ rules that apply regardless of which slice is active.
 ### Core rule
 
 Real names, jersey numbers, and other directly identifying data stay in
-Sheets/Supabase. Only a pseudonymous player ID plus behavioral signals or
-free text may reach the Claude API. No code path should send a player's
+Sheets/Supabase. Only free text (goal texts, check-in messages) may reach the
+Claude API; no player ID, attendance or behavioral signal is sent today. No code path should send a player's
 real name to the Claude API.
 
 ### Goal Mentor

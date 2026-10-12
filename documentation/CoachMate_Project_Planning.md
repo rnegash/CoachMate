@@ -45,7 +45,7 @@ September 21, 2026 · @Rufael Negash
 
 ## Governance & Compliance
 
-- **Pseudonymization:** the agent only ever sees player ID + behavioral signals — never names, phone numbers, or addresses
+- **Pseudonymization:** the Claude API only ever sees free text (goal drafts and goal texts for the Goal Mentor; goal texts and the player's message for the check-in matcher) — never names, phone numbers, addresses, attendance or behavioral signals; the Goal Mentor gets no player ID either
 - **Data separation:** roster/attendance sheets kept separate from sensitive data; Sheets permissions apply per file, not per tab
 - **ID linkage (residual risk):** the same ID connects sheets, app & WhatsApp — access rights assigned strictly per system
 - **Consent:** opt-in via WhatsApp keyword, clear consent message upfront, consent timestamped, revocable via "STOP"
@@ -60,3 +60,7 @@ September 21, 2026 · @Rufael Negash
 ##
 
 CoachMate – Projektplanung – erster Entwurf (aktualisiert)
+
+## Changelog
+
+- **2026-10-12:** Goal Mentor input corrected throughout: goal text only, no player ID, no attendance or behavioral signals (Architecture decision 9). WhatsApp check-in is built and no longer deferred (flowcharts: `CoachMate_WhatsApp_Checkin_Flows.md`). Research Finding 1 reframed for the final presentation: refining happens in the moment, together with the player. Compliance items still open: DPA/SCCs, consent wording review, Twilio redaction, third-party rights.

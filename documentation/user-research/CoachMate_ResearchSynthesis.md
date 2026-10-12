@@ -15,6 +15,8 @@ _Summary:_ Alex knows the components of a SMART goal but has no mental capacity 
 _Evidence:_ "Definitiv die Situation, nicht das Wissen... in dem Moment, wo ich mit 15 Leuten gleichzeitig auf dem Feld stehe... hab ich einfach nicht die mentale Kapazität, das Gespräch strukturiert zu Ende zu führen."
 _Implication:_ Goal capture must happen in two decoupled steps: (1) fast, low-effort note during/after the moment, (2) optional structuring assist afterward — never both at once.
 
+_Update 2026-10-12 (final presentation framing):_ refining is presented as happening in the moment, together with the player, so coach and player agree on the goal then and there. It stays optional and a separate step from the quick note.
+
 **Theme 2: No process exists today — this is bootstrapping, not fixing**
 _Summary:_ At ~40 members, structured tracking was never attempted; goals currently exist only as verbal exchanges that fade.
 _Evidence:_ "Beim nächsten Gespräch mit der Person nichts Greifbares da ist, worauf ich zurückkommen kann... Ohne was Schriftliches, Konkretes zum Draufschauen verpufft das Ganze einfach."
@@ -75,4 +77,4 @@ _Implication:_ These likely need to live as two separate entry points/screens: a
 
 ### Methodology Notes
 
-Based on one simulated interview (fictional but persona-grounded), two personas, and one customer-journey scenario. No real usage data yet; findings should be treated as directional until validated in user test #1 (Week 2).
+Based on one simulated interview (fictional but persona-grounded), two personas, and one customer-journey scenario. No real usage data yet; findings should be treated as directional until validated in user test #1.

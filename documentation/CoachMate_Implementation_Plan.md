@@ -5,7 +5,7 @@ Covers Oct 5–8 (Week 3) and Oct 12–15 (Week 4). Landing page/marketing and W
 ## Stack decision
 
 - **Next.js (responsive web app) + Vercel + Supabase** — confirmed, no PWA layer.
-- PWA (installable, offline shell) was considered and rejected for this phase: the caching-invalidation risk (stale attendance/goal data served offline) and setup time don't pay off against the 5-week timeline, given WhatsApp already covers the "reach the coach/player without opening an app" need. Can revisit as a Week 4+ add-on if time remains.
+- PWA (installable, offline shell) was considered and rejected for this phase: the caching-invalidation risk (stale attendance/goal data served offline) and setup time don't pay off against the 5-week timeline, given WhatsApp already covers the "reach the coach/player without opening an app" need. Can revisit as a later add-on if time remains.
 
 ## Functional slices (prioritized)
 
