@@ -52,7 +52,7 @@ The shared hub — history (not just a snapshot), goal status, and the per-playe
 - List of active goals — multiple allowed simultaneously, each showing the confirmed/refined text + last activity/update timestamp
 - "+ Add Goal" action (entry point to Screen 4) — always available, not conditional on having none
 - Completed goals history — separate/expandable section, showing past goals and their completion date
-  **Section C — Bot Behavior (override):**
+  **Section C — Bot Behavior (override):** *(deferred 2026-10-13, not built — see Technical Architecture decision 11)*
 
 - Shows whether this player currently follows the default (from Screen 6: Bot Settings) or has a custom override
 - If override: same toggle set as Bot Settings (passive/nudging, adaptive, advice-giving), scoped to this player only
@@ -83,6 +83,8 @@ General-purpose advisory chat — training planning, pedagogical cues, content. 
   **Open item:** history/persistence (saved, browsable past conversations vs. stateless single session) is undecided — for this prototype pass, shown as a single open session with no visible history list; flagged for a later decision.
 
 ## Screen 6: Bot Settings
+
+*Deferred 2026-10-13, not built: the bot only replies, so these toggles would have no effect yet. See Technical Architecture decision 11.*
 
 Default WhatsApp bot behavior for all players without an individual override (override lives in Player Detail, Section C).
 

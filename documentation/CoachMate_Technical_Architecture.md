@@ -1,10 +1,10 @@
 # CoachMate – Technical Architecture Diagram
 
-Sep 28, 2026 · Updated Oct 12, 2026 (WhatsApp check-in built, no longer deferred); Oct 8, 2026 (Goal Mentor input, check-in text storage, attendance write-back, goal retention) · Based on: Project Planning, Personas & User Stories, Customer Journey, Interview, Research Synthesis, Design Handoff
+Sep 28, 2026 · Updated Oct 13, 2026 (Assistant Coach built; Bot Settings deferred and removed from the diagram); Oct 12, 2026 (WhatsApp check-in built, no longer deferred); Oct 8, 2026 (Goal Mentor input, check-in text storage, attendance write-back, goal retention) · Based on: Project Planning, Personas & User Stories, Customer Journey, Interview, Research Synthesis, Design Handoff
 
 ## Scope
 
-Full target architecture. The WhatsApp check-in (BotMatcher/BotDelivery) has been built and is no longer deferred; dashed lines mark the WhatsApp path only to set it apart. Flowcharts drawn from the built code: `CoachMate_WhatsApp_Checkin_Flows.md`.
+Full target architecture, minus deferred parts: Bot Settings (decision 11) is left out of the diagram until it is decided. The WhatsApp check-in (BotMatcher/BotDelivery) has been built and is no longer deferred; dashed lines mark the WhatsApp path only to set it apart. Flowcharts drawn from the built code: `CoachMate_WhatsApp_Checkin_Flows.md`.
 
 ## Diagram
 
@@ -12,9 +12,9 @@ Full target architecture. The WhatsApp check-in (BotMatcher/BotDelivery) has bee
 flowchart TB
     subgraph WK2["Core app — in scope"]
         App[Coach Web App]
-        DB[(Supabase<br/>Roster copy · Attendance copy<br/>Goals · Bot Settings/Overrides)]
+        DB[(Supabase<br/>Roster copy · Attendance copy<br/>Goals · Check-ins)]
         GoalMentor[Claude API: Goal Mentor<br/>sees: goal draft + other active goal texts<br/>no player ID, name or attendance]
-        Assistant[Claude API: Assistant Coach<br/>stateless, no player context]
+        Assistant[Claude API: Assistant Coach<br/>stateless, no player context<br/>single session, nothing stored]
     end
 
     subgraph SHEETS["Google Sheets — external, existing"]
@@ -34,7 +34,7 @@ flowchart TB
     SheetRoster -.periodic pull.-> DB
     SheetAtt -.periodic pull.-> DB
     App -->|write attendance| SheetAtt
-    App -->|read attendance/roster, goals, bot settings| DB
+    App -->|read attendance/roster, goals, check-ins| DB
 
     %% Goal Mentor path
     App -->|"Refine: draft + other goal texts, player name stripped"| GoalMentor
@@ -61,7 +61,7 @@ flowchart TB
 ## Decision Log
 
 1. **Sheets vs. Supabase (roster & attendance):** Attendance is write-target Sheets, read-target periodic pull into Supabase (accepted staleness). Roster is periodic pull Sheets → Supabase. Goals and Bot Settings/overrides live only in Supabase. The sync is one-way (Sheets → Supabase) — avoids bidirectional sync/conflict resolution. The only write to Sheets is attendance marks taken in the app, written directly to the existing session column (changed cells only, column and player row looked up at save time); the app never creates Sheet columns, rows or sessions.
-2. **Advice-giving (Bot Settings, Screen 6):** Removed from scope entirely. No component generates or sends unreviewed AI advice to players. This also removes the "strictest Art. 50 case" (no coach review gate) from the architecture. Consequence: the "Advice-giving" toggle should be removed from Screen 6 in the Design Handoff — only Passive/proactive and Adaptive-to-player toggles remain.
+2. **Advice-giving (Bot Settings, Screen 6):** Removed from scope entirely. No component generates or sends unreviewed AI advice to players. This also removes the "strictest Art. 50 case" (no coach review gate) from the architecture. Consequence: the "Advice-giving" toggle should be removed from Screen 6 in the Design Handoff — only Passive/proactive and Adaptive-to-player toggles remain. *Screen 6 as a whole has since been deferred, see decision 11.*
 3. **PII boundary (WhatsApp bot):** Modeled as two separate boundary boxes/nodes rather than one — `BotMatcher` (AI-generation, sees player ID + goal text, never phone/contact info) and `BotDelivery` (delivery + ID→phone resolution, sees phone numbers/Twilio/roster PII, never message-generation logic). Chosen as the safer approach: least-privilege via structural separation rather than same-box internal discipline; matches the project's own "access rights assigned strictly per system" principle. Trade-off: stricter to build (real service boundary, not just a code module) — relevant for build scoping.
 4. **Gender field:** Dropped from scope entirely — not modeled anywhere, no data-model or consent addition needed.
 5. **Assistant Coach persistence:** Stateless — calls Claude API directly, no DB read/write, single session only.
@@ -70,6 +70,7 @@ flowchart TB
 8. **Clarifying question (unclear check-in):** Templated/fixed wording with slots filled by the matcher's decision (e.g. goal names) — not freely LLM-generated text reaching the player. Treated as out of scope for Art. 50 labeling on that basis. If this is ever implemented as freely generated phrasing instead, it should be re-evaluated and labeled like the other AI outputs.
 9. **Goal Mentor input (decided 2026-10-07, extended 2026-10-08):** Sends only the coach's goal draft and the player's other active goal texts. No player ID (allowed but not needed), no name, no attendance — a missed-session count says nothing about why, and read out in front of the player it can feel like judgement. Before sending, the server replaces the selected player's own name with "the player" in all sent text; other names rely on the static no-names caption. *Replaces the original "player ID + behavioral signals" design.* Spec: `documentation/AI goal mentor/`.
 10. **Goal storage and retention (decided 2026-10-08):** Goals store text, `status` (active/completed), `created_at`, `updated_at`, `completed_at` — no score, priority, progress or AI-involvement flag (a static footnote covers Art. 50 instead). A player's goals are deleted when they are removed from the roster, matching the check-in text rule.
+11. **Bot Settings (deferred 2026-10-13):** Not built, and removed from the diagram (no Supabase table, no app path). The bot only replies to players and never messages them on its own, so a Passive/proactive toggle would change nothing, and the consent wording covers replies only. Proactive reminders would need a scheduled sender, new consent wording (version bump, reminders only for players who agreed to it) and, outside the 24 h after a player's last message, a Meta-approved WhatsApp template, which the Twilio sandbox can't provide. "Adaptive to player" has no defined behavior. Revisit only with those decided (Implementation Plan, slice 6).
 
 ## Known Open Items (carried from Design Handoff, not resolved by this diagram)
 

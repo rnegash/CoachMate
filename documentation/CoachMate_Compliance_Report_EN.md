@@ -14,7 +14,7 @@ CoachMate is a prototype tool that helps a volunteer coach set SMART goals, trac
 - 🟡 BotMatcher/BotDelivery split enforced in code only: both use the Supabase service-role key in one deployment — accepted for the pilot (2026-10-08); separate deployments with scoped keys would be needed for real isolation
 - 🟡 Twilio, WhatsApp (Meta) and Anthropic keep their own copies of messages outside CoachMate's deletion rules — disclosed in the consent text (2026-10-08); Twilio message redaction to be checked
 - 🟡 Sheets sync, AI API calls, consent wording — mitigations designed but not fully enforced/documented
-- 🟢 Bot Settings, AI suggestion storage, goal-list access — access-controlled or non-PII
+- 🟢 AI suggestion storage, goal-list access — access-controlled or non-PII (Bot Settings deferred 2026-10-13, not built: nothing stored)
   **4. GDPR Status: Partially fulfilled**
 - Pseudonymization and system-level data separation are designed and mostly followed
 - Open: DPA/SCCs with the Claude API provider and Twilio not yet confirmed

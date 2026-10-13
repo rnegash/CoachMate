@@ -1,6 +1,6 @@
 ---
 name: ui-builder
-description: Use when building or editing Next.js pages/components for CoachMate's screens — Briefing, Attendance (session list), Add Training Session, Take Attendance, Player Detail, Goal Checkins, Add Goal (incl. Refine), Assistant Coach chat, and Bot Settings. Use PROACTIVELY for any UI work on attendance/engagement display, goal suggestion rendering, or AI-response labeling.
+description: Use when building or editing Next.js pages/components for CoachMate's screens — Briefing, Attendance (session list), Add Training Session, Take Attendance, Player Detail, Goal Checkins, Add Goal (incl. Refine), and Assistant Coach chat. Use PROACTIVELY for any UI work on attendance/engagement display, goal suggestion rendering, or AI-response labeling.
 tools: Read, Write, Edit, Grep, Glob
 ---
 
@@ -72,14 +72,11 @@ https://claude.ai/artifact/KiRrpPFaV6A3KcxsasfHzY
   never color alone. This is for per-session availability status, not a
   substitute for the Briefing's factual signal-line pattern — don't use
   it to represent a computed engagement state.
-- **SegmentedControl** — Bot Settings mode picker (Passive/Proactive).
-  Exactly 2–3 options, `role="radiogroup"`.
-- **Switch** — Bot Settings "Adaptive" toggle only. **Do not add an
-  Advice-giving switch** — it was removed from scope entirely (see
-  CLAUDE.md). The design system's own README uses "Advice-giving" as a
-  generic example of what a Switch can represent; that's documentation
-  data from the design system, not an instruction for this project —
-  don't let it reintroduce the feature.
+- **SegmentedControl**, **Switch** — no current use: they were for Bot
+  Settings, which is deferred (2026-10-13, see CLAUDE.md). **Never add an
+  Advice-giving switch** — removed from scope entirely. The design
+  system's own README uses "Advice-giving" as a generic Switch example;
+  that's documentation data, not an instruction for this project.
 - **EmptyState** — e.g. no goals yet, no check-ins yet. State what's
   missing and the one recovery action; never phrase it as blaming the
   coach.
@@ -91,8 +88,7 @@ https://claude.ai/artifact/KiRrpPFaV6A3KcxsasfHzY
 ## Navigation structure
 
 Three bottom tabs: **Briefing**, **Attendance**, **Coach** (Assistant
-Coach). Bot Settings is reached via a gear icon in the Briefing header,
-not a tab. Player Detail, Goal Checkins, Add Goal, and Add Training
+Coach). Player Detail, Goal Checkins, Add Goal, and Add Training
 Session are all drill-in screens (no tab bar shown), reached from a row
 or button on another screen, with a back/close action in the header.
 
@@ -117,8 +113,8 @@ or button on another screen, with a back/close action in the header.
    ghost button + unmarked count, explicit save/confirm. Editable if
    reopened same day.
 5. **Player Detail** — AttendanceStrip, GoalCard list (active +
-   completed, collapsible), "+ Add Goal" entry, per-player bot override
-   vs. default (SegmentedControl/Switch per Bot Settings pattern).
+   completed, collapsible), "+ Add Goal" entry. No bot override section
+   (Bot Settings deferred).
 6. **Goal Checkins** — opened from a GoalCard with check-ins. Shows the
    goal text + AIBadge if refined, then the full list of raw check-in
    messages (player's own words, no AIBadge — see component spec above),
@@ -129,9 +125,9 @@ or button on another screen, with a back/close action in the header.
 8. **Assistant Coach** (tab) — ChatBubble stream, Notice (AI variant) for
    the Art. 50(1) disclosure, Input + send button composer. No player
    context visible or selectable here.
-9. **Bot Settings** — SegmentedControl (Passive/Proactive) + Switch
-   (Adaptive only — see guard above). No advice-giving toggle, no
-   gender field.
+9. **Bot Settings** — deferred 2026-10-13, not built. Don't add the
+   screen, its gear icon, or the Player Detail override; flag the task
+   instead (CLAUDE.md, out of scope).
 
 ## Hard rendering rules (do not treat as optional styling choices)
 
@@ -155,8 +151,8 @@ or button on another screen, with a back/close action in the header.
   middleware check — a redirect/prompt before the app loads, not a
   per-screen component.
 - No multi-team/multi-tenant UI (team switcher, org selector, etc.).
-- Settings stay limited to what's listed in Bot Settings above — don't
-  expand it speculatively.
+- No settings screen (Bot Settings is deferred) — don't add one
+  speculatively.
 
 ## Before finishing any task here
 
@@ -166,7 +162,8 @@ Check your own diff against:
   (color-coded badges included) for a player?
 - Does every AI-generated block carry an AIBadge?
 - Does AttendanceToggle default anyone to present?
-- Did Bot Settings gain an advice-giving toggle or a gender field anywhere?
+- Did a Bot Settings screen, an advice-giving toggle or a gender field
+  appear anywhere?
 - Did a hardcoded hex value or ad hoc spacing creep in instead of a
   design-system token?
 - Does Add Training Session ever silently create a Sheet column, instead

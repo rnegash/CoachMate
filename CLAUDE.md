@@ -19,7 +19,7 @@ it does not change the architecture now.
 ## Tech Stack
 
 - Frontend/Backend: Next.js
-- Database: Supabase (roster/attendance copies, Goals, Bot Settings/overrides)
+- Database: Supabase (roster/attendance copies, Goals, WhatsApp check-ins)
 - External data source: Google Sheets (Roster, Attendance) — one-way
   periodic pull into Supabase; attendance writes go back to Sheets directly
 - AI: Claude API — two separate integrations, "Goal Mentor" (goal text
@@ -56,6 +56,11 @@ rules that apply regardless of which slice is active.
 - Gender as a stored/groupable player field — dropped from scope
 - Advice-giving bot feature — removed from scope entirely (was the
   strictest Art. 50 case; removing it also removes that risk)
+- WhatsApp bot settings (Passive/proactive, Adaptive; default + per-player
+  override) — deferred 2026-10-13. The bot only replies, so the toggles
+  would do nothing; proactive reminders need new consent wording and, outside
+  WhatsApp's 24 h window, an approved template the sandbox can't provide.
+  "Adaptive" is undefined. See Implementation Plan, slice 6.
 - PWA layer — considered and rejected for this phase (stale offline data
   risk; WhatsApp already covers reaching people without opening the app).
   Revisit only if time remains after core slices.
@@ -63,8 +68,8 @@ rules that apply regardless of which slice is active.
 ### In scope now
 
 - Coach Web App (Next.js) — overview/briefing, attendance, player detail,
-  goal capture + AI refine, assistant coach chat, bot settings
-- Supabase — roster/attendance copies, Goals, Bot Settings/overrides
+  goal capture + AI refine, assistant coach chat
+- Supabase — roster/attendance copies, Goals, WhatsApp check-ins
 - Google Sheets — one-way pull into Supabase; attendance write-back
 - Claude API — Goal Mentor + Assistant Coach integrations
 - Player check-ins via WhatsApp (`BotMatcher` / `BotDelivery` split — see

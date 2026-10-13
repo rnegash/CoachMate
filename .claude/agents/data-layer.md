@@ -1,6 +1,6 @@
 ---
 name: data-layer
-description: Use when building or editing Supabase schema, the one-way Google Sheets to Supabase sync, or attendance write-back to Sheets. Use PROACTIVELY for any new table, column, or migration touching roster, attendance, goals, check-ins, or bot settings.
+description: Use when building or editing Supabase schema, the one-way Google Sheets to Supabase sync, or attendance write-back to Sheets. Use PROACTIVELY for any new table, column, or migration touching roster, attendance, goals, or check-ins.
 tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
@@ -56,8 +56,8 @@ date (+ optional label for extra sessions).
 - **GoalCheckins** — raw player check-in free text IS persisted here
   (coach needs to read it), plus player ID + goal ID + check-in signal.
   This table is the one with real retention-rule obligations — see below.
-- **BotSettings** — default + per-player override (Passive/Proactive,
-  Adaptive on/off). No advice-giving field — removed from scope.
+- **BotSettings** — deferred 2026-10-13, not built. Don't create this
+  table; if a task asks for it, stop and flag it (CLAUDE.md, out of scope).
 
 ## Hard rules (check before adding any column or table)
 
