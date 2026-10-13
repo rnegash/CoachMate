@@ -33,6 +33,15 @@ Not tied to one slice: once both external processors are live (Claude API in sli
   - Docs naming Twilio: `CLAUDE.md`, Compliance Report, Technical Architecture, `CoachMate_WhatsApp_Checkin_Flows.md`.
   - Needs from Alex: a Meta Business account and a phone number not in use on WhatsApp; business verification may take days, start early. Check Meta's current pricing and terms first (user-initiated replies were expected to be free; not verified).
 
+## Open-source packaging (decided 2026-10-13)
+
+Other teams run CoachMate as a self-hosted copy (see `CLAUDE.md`, Project Identity). Pilot testing is outside the software project. Work items, not yet scheduled:
+
+- **Privacy pass — done 2026-10-13** (`github.com/rnegash/CoachMate` was already public at that point, so this checked what was already out). All 21 commits, all branches: no API keys, tokens, private keys, Supabase project URL or Sheet IDs; `.env.local` was never committed. Phone numbers are test values (`+49176 12345678`, `+1 415 555 0100`) or Twilio's published signature test vector. People named in docs and tests are personas or test data: the interview is marked "simuliert (fiktiv)"; Alex Schneider, Lena Bauer and Anna Berg are fictional. No real club, team or player data. Left as is: commit author emails (personal and course address) are public in history; rewriting history was not done. The Sideline design-system link (`claude.ai/artifact/…`) is private, so others can't open it; the tokens it defines are in `app/globals.css`.
+- **Configuration instead of hardcoding — done 2026-10-13.** Two env vars, read in `lib/instance-config.ts` (no settings screen, no DB table): `COACHMATE_SPORT` (prompt text + sport reference file; unset → "sports teams", no reference) and `COACHMATE_TIME_ZONE` (today, briefing week, displayed times; unset → UTC). Ultimate-specific examples in the goal input, Assistant Coach caption and WhatsApp opt-in reply made sport-neutral. Remaining sport-specific content: only `ultimate.md` exists as a sport reference; other teams write their own (setup guide). "CoachMate" stays as the product name in the consent text; the UI stays English.
+- **Setup without the author — done 2026-10-13.** `README.md` "Setting up a copy for your team": Supabase, Sheets from templates, team settings, local run, Vercel, optional WhatsApp, another sport's reference. Sheet templates as CSV in `templates/` (`roster.csv`, `attendance.csv`, fictional example rows), imported via *File → Import*; chosen over a shared Google Sheet so nothing depends on the author's Google account. The guide says to leave session cells empty, not checkboxes: an unticked checkbox reads as FALSE = absent.
+- **Deployer guide — done 2026-10-13:** `documentation/Running_your_own_copy.md`, linked from the README. Processors and DPAs, adults only, consent text and version, deletion scope, AI labels in place, Art. 50(2) open.
+
 ## Day mapping (strict 2-day blocks)
 
 | Days | Slices | Deliverable |

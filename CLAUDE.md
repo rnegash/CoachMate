@@ -13,8 +13,13 @@ Two core value props:
 2. An AI coaching mentor for SMART-goal suggestions and tips.
 
 Built as a single-tenant app for one coach's own team (real validation,
-not a multi-team product). Open-sourcing the code is a possible later step;
-it does not change the architecture now.
+not a multi-team product). Decided 2026-10-13: the code will be
+open-sourced and packaged so other teams can run it as a **self-hosted
+copy** — each team deploys its own instance with its own Supabase, Sheets
+and API keys, and each coach is the controller of their own team's data.
+There is no hosted multi-team service; the architecture stays single-tenant.
+Positioned as a coaching-assistant platform that can grow; every new
+feature still needs its own data-flow decision in this file.
 
 ## Tech Stack
 
@@ -105,7 +110,8 @@ rules that apply regardless of which slice is active.
 
 ### Not yet decided
 
-- Whether pilot test #1 includes a real player or is Alex-only
+- Whether pilot test #1 includes a real player or is Alex-only (the pilot
+  itself runs outside the software project)
 
 ## Data-Flow & Privacy Boundaries
 
@@ -407,12 +413,6 @@ these rules inline, to avoid drift between copies.
   because the static caption is lower-effort and was what the hi-fi
   prototype actually showed; revisit if the static caption proves
   insufficient in practice (e.g. during pilot test #1).
-- Copyable Google Sheet templates: ready-made Roster and Attendance Sheets
-  with the headers the sync expects (`player_id`, `name`, optional `jersey`
-  on Roster; `player_id` plus one date column per session, optionally
-  "YYYY-MM-DD Label" for extra sessions, on Attendance), so a coach copies
-  them instead of building the layout by hand. Most useful if the code is
-  open-sourced; would not change the sync's read-only access to Sheets.
 - Team-specific AI reference: a second document next to the generic sport
   reference (`documentation/AI sport knowledge/`) for one team's own
   terms, structures and drills, loaded into the Assistant Coach and Goal

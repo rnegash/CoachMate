@@ -49,7 +49,7 @@ export function GoalDraftForm({ playerId }: { playerId: string }) {
           onChange={(e) => setDraft(e.target.value)}
           maxLength={GOAL_TEXT_MAX}
           rows={3}
-          placeholder="e.g. better forehands"
+          placeholder="e.g. better passing under pressure"
           aria-describedby="goal-caption"
           className="rounded-md border-[1.5px] border-border-strong bg-surface-raised px-space-3 py-space-2 text-body"
         />

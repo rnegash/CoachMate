@@ -30,7 +30,7 @@ export const CONSENT_INVITE = [
 ].join("\n");
 
 export const OPTED_IN =
-  'You\'re in. Send me an update on one of your goals any time, e.g. "practised hucks for 20 minutes". I\'ll always ask before sharing anything with your coach. Reply STOP to stop.';
+  'You\'re in. Send me an update on one of your goals any time, e.g. "practised my passing for 20 minutes". I\'ll always ask before sharing anything with your coach. Reply STOP to stop.';
 
 export const OPTED_OUT =
   "Stopped. You won't get any more messages from CoachMate. Your saved updates will be deleted within a day after the 7 days following your first STOP; reply START within those 7 days to keep them.";

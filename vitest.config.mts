@@ -7,5 +7,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["lib/**/*.test.ts"],
+    // Date tests are written for a team in Berlin (UTC+1/+2).
+    env: { COACHMATE_TIME_ZONE: "Europe/Berlin" },
   },
 });

@@ -1,5 +1,7 @@
+import { parseTimeZone } from "@/lib/instance-config";
+
 // The server runs in UTC on Vercel; show times in the team's local zone.
-const TIME_ZONE = "Europe/Berlin";
+const TIME_ZONE = parseTimeZone(process.env.COACHMATE_TIME_ZONE);
 
 export function formatDateTime(iso: string): string {
   return new Intl.DateTimeFormat("en-GB", {

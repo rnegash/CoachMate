@@ -135,7 +135,7 @@ export function CoachChat() {
           {/* Static caption required by CLAUDE.md wherever free text can reach the AI. */}
           <p id="coach-caption" className="text-caption text-ink-muted">
             The AI receives only what you type here. Leave out names and contact details — describe the situation
-            instead, e.g. “a newer player who struggles with backhands”.
+            instead, e.g. “a newer player who struggles with one technique”.
           </p>
           <Button type="submit" variant="primary" disabled={pending || draft.trim() === ""}>
             {pending ? "Sending…" : "Send"}
