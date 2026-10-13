@@ -1,10 +1,8 @@
 import "server-only";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
+import { loadSystemPrompt } from "@/lib/ai-prompt";
 import {
-  assembleSystemPrompt,
   buildUserMessage,
   limitResult,
   nameRemover,
@@ -20,23 +18,8 @@ import {
 // Sonnet 5.5 at low effort with thinking off: Haiku 4.5 ignored the
 // output rules (no suggestions, repeated names) in testing on 2026-10-07.
 const MODEL = "claude-sonnet-5-5";
-// Single-team app; there is no sport setting yet.
-const SPORT = "ultimate";
-const DOCS = path.join(process.cwd(), "documentation");
 
 let systemPrompt: Promise<string> | undefined;
-
-async function loadSystemPrompt(): Promise<string> {
-  const prompt = await readFile(
-    path.join(DOCS, "AI goal mentor", "goal-mentor.prompt.md"),
-    "utf8",
-  );
-  const reference = await readFile(
-    path.join(DOCS, "AI sport knowledge", `${SPORT}.md`),
-    "utf8",
-  ).catch(() => null);
-  return assembleSystemPrompt(prompt, SPORT, reference);
-}
 
 let client: Anthropic | undefined;
 
@@ -60,7 +43,7 @@ export async function getGoalFeedback(
 ): Promise<MentorResponse> {
   const clean = nameRemover(playerName);
   try {
-    systemPrompt ??= loadSystemPrompt();
+    systemPrompt ??= loadSystemPrompt("AI goal mentor", "goal-mentor.prompt.md");
     client ??= new Anthropic();
     const response = await client.beta.messages.parse({
       model: MODEL,

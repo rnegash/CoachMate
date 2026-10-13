@@ -26,11 +26,12 @@ Send the full contents of `assistant-coach.prompt.md` as one string in the top-l
 
 ## 4. Model
 
-- Model: Claude Haiku 4.5. Use the pinned snapshot `claude-haiku-4-5-20251001` so behavior does not change without notice. The alias `claude-haiku-4-5` resolves to the same snapshot today.
-- Limits: 200K-token context window, 64K-token max output.
-- Price: $1 per million input tokens, $5 per million output tokens.
-- Do not enable extended thinking. Omit the `thinking` parameter, which keeps cost and latency low for short coaching answers.
-- Source: Anthropic model documentation (platform.claude.com), checked October 5, 2026. Re-check before release.
+- Model: Claude Haiku 5.5 (`claude-haiku-5-5`), the current Haiku. Changed from Haiku 4.5 on 2026-10-13 when the chat was built: Haiku 5.5 replaces it in the same tier at a lower price.
+- Limits: 1M-token context window, 128K-token max output.
+- Price: $0.10 per million input tokens, $0.50 per million output tokens (prompts up to 100K tokens).
+- Turn thinking off with `thinking: {"type": "disabled"}` (Haiku 5.5 thinks by default) and set `output_config: {"effort": "low"}`. This keeps cost and latency low for short coaching answers.
+- Refusals: Haiku 5.5 has no server-side refusal fallback. Treat `stop_reason: "refusal"` as "no reply available".
+- Source: Anthropic model documentation, checked October 13, 2026. Re-check before release.
 
 ## 5. Request parameters
 
@@ -41,7 +42,7 @@ Send the full contents of `assistant-coach.prompt.md` as one string in the top-l
 
 - The API keeps no memory. For each request, send the full message history of the current session in `messages`, alternating user and assistant.
 - Start a new session with an empty history. This matches the stateless design and the "no earlier conversations" line in the prompt.
-- Input cost grows with each turn, because the whole history is resent. Consider capping the session length.
+- Input cost grows with each turn, because the whole history is resent. The app caps a session at 20 coach messages of up to 2,000 characters each (`lib/assistant-coach-input.ts`). The server checks the history the browser sends (alternating roles, starts and ends with the coach) because it keeps no session of its own.
 
 ## 7. Security
 
@@ -52,9 +53,11 @@ Send the full contents of `assistant-coach.prompt.md` as one string in the top-l
 
 ```json
 {
-  "model": "claude-haiku-4-5-20251001",
+  "model": "claude-haiku-5-5",
   "max_tokens": 1024,
   "system": "<assembled prompt>",
+  "thinking": { "type": "disabled" },
+  "output_config": { "effort": "low" },
   "messages": [
     { "role": "user", "content": "..." }
   ]
