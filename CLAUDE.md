@@ -26,7 +26,10 @@ it does not change the architecture now.
   only, see Data-Flow section) and "Assistant Coach" (stateless, no player
   context)
 - Hosting: Vercel (free tier)
-- Player checkins via messages: Twilio Sandbox, WhatsApp
+- Player checkins via messages: Twilio Sandbox, WhatsApp — for the first
+  demo only. Decided 2026-10-13: afterwards BotDelivery moves to Meta's
+  WhatsApp Cloud API directly, with no Twilio in between (Implementation
+  Plan, "After the first demo"). Not built yet.
 - Design system: "Sideline" (tokens + component specs at
   https://claude.ai/artifact/KiRrpPFaV6A3KcxsasfHzY) — `ui-builder`
   implements against this directly rather than inventing its own styling
@@ -170,9 +173,10 @@ holding only its own scoped key.
 
 Twilio, WhatsApp (Meta) and Anthropic keep their own copies of messages
 under their own retention rules; CoachMate's deletion rules only cover
-Supabase. Accepted 2026-10-08 and disclosed in the consent text. To do:
-check whether Twilio's message redaction setting is available on this
-account and, if so, turn it on and record it here.
+Supabase. Accepted 2026-10-08 and disclosed in the consent text. To do,
+while Twilio is still in use (demo only): check whether Twilio's message
+redaction setting is available on this account and, if so, turn it on and
+record it here. The move to Meta's Cloud API removes Twilio's copy.
 
 ### Phrasing rule for attendance/engagement data
 
@@ -188,7 +192,9 @@ priority/urgency score.
   (2026-10-08, see Retention rule); Compliance Status still to be updated
 - Consent wording covering stored check-in text: drafted in
   `lib/bot-consent.ts` (2026-10-08), not yet reviewed outside the team
-- DPA/SCC confirmation with Claude API provider and Twilio outstanding
+- DPA/SCC confirmation with Claude API provider outstanding. Twilio is
+  demo-only (see Tech Stack); confirm Meta's WhatsApp Business terms
+  instead when switching to the Cloud API
 - Roster is assumed adults-only (no parental consent handling built)
 
 ## BotMatcher / BotDelivery Boundary Split
@@ -414,7 +420,8 @@ these rules inline, to avoid drift between copies.
 
 ## Known Open Questions (carried forward, do not assume resolved)
 
-1. DPA/SCC confirmation with Claude API provider and Twilio is scheduled
+1. DPA/SCC confirmation with Claude API provider (and Meta, once the
+   Cloud API replaces the demo-only Twilio) is scheduled
    as a status check by Day 8 of the Implementation Plan, but not
    necessarily resolved by then.
 2. A third party's own standing right over being named in someone else's

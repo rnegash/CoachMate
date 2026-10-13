@@ -17,7 +17,7 @@ CoachMate is a prototype tool that helps a volunteer coach set SMART goals, trac
 - 🟢 AI suggestion storage, goal-list access — access-controlled or non-PII (Bot Settings deferred 2026-10-13, not built: nothing stored)
   **4. GDPR Status: Partially fulfilled**
 - Pseudonymization and system-level data separation are designed and mostly followed
-- Open: DPA/SCCs with the Claude API provider and Twilio not yet confirmed
+- Open: DPA/SCCs with the Claude API provider not yet confirmed. Twilio is used for the first demo only (decided 2026-10-13); Meta's WhatsApp Cloud API replaces it afterwards, and Meta's terms get checked then
 - Done (2026-10-08): retention/deletion rule for check-in text (roster removal; 7 days after STOP; drafts after 24 h), consent wording covering stored text, AI processing and US processing — wording not yet reviewed outside the team
   **5. Transparency Status (EU AI Act Art. 50)**
 - Goal Mentor suggestions and Assistant Coach responses are already labeled "AI-generated" in the prototype
@@ -25,6 +25,6 @@ CoachMate is a prototype tool that helps a volunteer coach set SMART goals, trac
 - All WhatsApp bot messages (consent text, goal question, share confirmation) are templated, not freely generated, so intentionally unlabeled — re-evaluate if that changes. The consent text discloses that an AI reads each message to match it to a goal
   **6. Measures Still Needed**
 - Review the WhatsApp consent wording (`lib/bot-consent.ts`) before the first real player opts in
-- Confirm DPA/SCCs with the Claude API provider and Twilio
-- Check whether Twilio message redaction is available on the account and enable it
+- Confirm DPA/SCCs with the Claude API provider; with Meta when switching to the WhatsApp Cloud API
+- While Twilio is in use (demo only): check whether Twilio message redaction is available on the account and enable it
 - Evaluate the static no-names caption during pilot test #1 (active name-pattern detection deferred; the player's own name is already removed server-side from Goal Mentor requests and saved goals)

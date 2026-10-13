@@ -23,7 +23,15 @@ Covers Oct 5–8 (Week 3) and Oct 12–15 (Week 4). Landing page/marketing and W
    - **Deferred 2026-10-13, not built.** The bot only replies; it never sends a message on its own, and the consent wording covers replies only, so a Passive/proactive toggle would change nothing. Making "proactive" real needs a scheduled reminder, new consent wording (version bump, reminders only for players who agreed to it), and, outside the 24 h after a player's last message, a Meta-approved WhatsApp template, which the Twilio sandbox can't provide. "Adaptive to player" has no defined behavior yet. Revisit only with those decided; any new stored setting needs its own decision in `CLAUDE.md` first.
 7. **AI assistant** — stateless Assistant Coach chat, no player context, no DB access. Includes: the same static no-names caption on the message input.
 
-Not tied to one slice: once both external processors are live (Claude API in slice 2, Twilio in slice 3), confirm DPA/SCC status with both providers (Compliance Report open item).
+Not tied to one slice: once both external processors are live (Claude API in slice 2, Twilio in slice 3), confirm DPA/SCC status with both providers (Twilio since made demo-only, 2026-10-13: Meta replaces it after the demo, see "After the first demo") (Compliance Report open item).
+
+## After the first demo
+
+- **Replace Twilio with Meta's WhatsApp Cloud API** (decided 2026-10-13). Twilio and its sandbox are for the first demo only. Afterwards BotDelivery talks to Meta directly: one fewer processor holding message copies, one fewer DPA/SCC, and no sandbox re-join every 3 days. US processing stays (Meta hosts the Cloud API).
+  - Code, BotDelivery side only: webhook (Meta's signature check, JSON payload, one-time verification request) and sending via Meta's Graph API in place of `lib/twilio.ts`. BotMatcher is unchanged.
+  - Consent text in `lib/bot-consent.ts` names Twilio: new wording + version bump, so players opt in again under it.
+  - Docs naming Twilio: `CLAUDE.md`, Compliance Report, Technical Architecture, `CoachMate_WhatsApp_Checkin_Flows.md`.
+  - Needs from Alex: a Meta Business account and a phone number not in use on WhatsApp; business verification may take days, start early. Check Meta's current pricing and terms first (user-initiated replies were expected to be free; not verified).
 
 ## Day mapping (strict 2-day blocks)
 
@@ -42,6 +50,6 @@ Not tied to one slice: once both external processors are live (Claude API in sli
 
 ## Open items carried forward (not resolved by this plan)
 
-- DPA/SCC confirmation with Claude API provider and Twilio (checked, not necessarily resolved, by end of Day 8).
+- DPA/SCC confirmation with Claude API provider (checked, not necessarily resolved, by end of Day 8). Twilio is demo-only (see "After the first demo"); Meta's terms are checked when switching instead.
 - Whether Assistant Coach gets persistent/browsable history, or stays single-session.
 - Whether pilot test #1 included a real player, or was Alex-only.
