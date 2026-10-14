@@ -388,6 +388,10 @@ and compliance rules. Subagent definitions (`.claude/agents/*.md`) should
 read this file directly at the start of their run rather than restating
 these rules inline, to avoid drift between copies.
 
+- Before every git commit, run the `diagram-sync` skill
+  (`.claude/skills/diagram-sync/`): it checks the changes against the
+  technical diagrams listed in its `registry.md` and updates any that no
+  longer match, so diagram fixes land in the same commit.
 - `ai-integration` and `compliance-reviewer` should both `Read` this file
   at the start of their run rather than each encoding their own copy of
   the data-boundary and Art. 50 labeling rules.

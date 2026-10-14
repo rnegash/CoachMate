@@ -1,6 +1,6 @@
 # CoachMate – WhatsApp Check-in Flowcharts
 
-Oct 12, 2026 · Drawn from the built code (`app/api/whatsapp/route.ts`, `lib/bot-delivery.ts`, `lib/bot-matcher.ts`, `lib/checkin-flow.ts`, `lib/retention-purge.ts`, `lib/roster-sync.ts`) after the end-to-end sandbox test · Rules: `CLAUDE.md`, "BotMatcher / BotDelivery Boundary Split"
+Oct 12, 2026 · Updated Oct 14, 2026 (data flow: coach app also writes goals) · Drawn from the built code (`app/api/whatsapp/route.ts`, `lib/bot-delivery.ts`, `lib/bot-matcher.ts`, `lib/checkin-flow.ts`, `lib/retention-purge.ts`, `lib/roster-sync.ts`) after the end-to-end sandbox test · Rules: `CLAUDE.md`, "BotMatcher / BotDelivery Boundary Split"
 
 Three charts, one question each:
 
@@ -118,9 +118,11 @@ flowchart TB
     Sheet -->|"one-way pull"| Sync
     Sync --> Players
     Sync -->|"phone column"| Contacts
-    App -->|"reads goals + shared check-ins only"| Goals
+    App -->|"writes goals, player name removed<br/>reads goals + shared check-ins only"| Goals
     App --> Checkins
 ```
+
+Deletions are left out here: the roster sync and the daily purge also delete drafts, check-ins, goals and contacts and reset opt-ins (chart 3).
 
 What the coach never sees: phone numbers, drafts, and whether or when a player joined or sent STOP (decided 2026-10-12).
 
